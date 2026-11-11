@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Minecraft: Mine Clicker</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pirata+One&display=swap">
+<style>
+:root{color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{margin:0;height:100%;overflow:hidden;background:#2b2018;background-blend-mode:multiply;color:#fff;font:11px/1.5 'Press Start 2P','Courier New',monospace;image-rendering:pixelated}
+#app{position:relative;height:100%;max-width:760px;margin:0 auto;background:rgba(0,0,0,.35)}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;padding:12px;gap:4px}
+.screen.active{display:flex}
+.logo{margin:0 0 28px;text-align:center;font-size:clamp(22px,7vw,44px);line-height:1.2;color:#c9c9c9;text-shadow:3px 3px #333,6px 6px #1a1a1a;letter-spacing:2px}
+.logo span{display:block;margin-top:14px;font-size:.5em;color:#ffd33d;text-shadow:3px 3px #5a4300;animation:splash 1.2s ease-in-out infinite alternate}
+@keyframes splash{to{transform:scale(1.12) rotate(-2deg)}}
+.btn{display:block;width:min(86vw,360px);margin:6px auto;padding:14px 8px;background:#8b8b8b;color:#fff;border:3px solid;border-color:#dcdcdc #373737 #373737 #dcdcdc;outline:3px solid #000;text-shadow:2px 2px #3f3f3f;font:inherit;font-size:12px;cursor:pointer;text-align:center}
+.btn:hover,.btn:focus-visible{background:#7480c8}
+.btn:active{border-color:#373737 #dcdcdc #dcdcdc #373737}
+.mini{width:auto;min-width:44px;margin:0;padding:8px 10px}
+.panel{background:#c6c6c6;border:4px solid;border-color:#fff #555 #555 #fff;outline:3px solid #000;color:#373737;padding:12px;width:min(92vw,520px);max-height:76vh;overflow:auto}
+.panel h2{margin:0 0 10px;font-size:13px;color:#373737}
+.row{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.ach{padding:6px 0;border-bottom:2px solid #9a9a9a;font-size:9px}
+.ach.on{color:#0a6b1d}.ach.off{color:#777}
+#game{justify-content:flex-start;align-items:stretch;padding:8px;gap:6px}
+.hud{background:rgba(0,0,0,.55);border:3px solid #000;padding:8px;display:flex;flex-direction:column;gap:6px;font-size:10px}
+.hud .row{gap:6px}
+.bar{position:relative;flex:1;height:18px;background:#1c1c1c;border:3px solid #000;overflow:hidden}
+.bar i{display:block;height:100%;width:0;transition:width .12s}
+.bar span{position:absolute;inset:0;text-align:center;font-size:8px;line-height:12px;text-shadow:1px 1px #000}
+.dur i{background:#43c04a}.lay i{background:#5a9bff}.hp i{background:#e03c3c}.boss i{background:#ff8a00}
+#stage{background-size:64px;background-color:#999;background-blend-mode:multiply;border:3px solid #000;position:relative;flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
+#vMine,#vInv{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;width:100%}
+[hidden]{display:none!important}
+#wrap{position:relative;display:inline-block}
+#blk{width:min(62vw,38vh,300px);aspect-ratio:1;image-rendering:pixelated;display:block;cursor:pointer;touch-action:manipulation;border:4px solid #000}
+#ws{position:absolute;width:30px;height:30px;transform:translate(-50%,-50%);pointer-events:none;color:#ffd33d;font-size:24px;text-align:center;line-height:30px;text-shadow:0 0 6px #ff8a00,2px 2px #000;animation:pulse .7s infinite alternate}
+@keyframes pulse{to{transform:translate(-50%,-50%) scale(1.35);opacity:.65}}
+#hpbarW{width:min(80vw,340px)}
+#bossBar{width:min(80vw,340px);text-align:center;color:#ff8a00;font-size:10px}
+#fx{position:absolute;inset:0;pointer-events:none}
+.pop{position:absolute;pointer-events:none;color:#fff;text-shadow:2px 2px #000;animation:up .7s forwards;font-size:11px;z-index:3}
+.pop.c{color:#ffd33d;font-size:16px}
+@keyframes up{to{transform:translateY(-60px);opacity:0}}
+.tabs{display:flex;gap:6px}.tabs .btn{flex:1;width:auto;margin:0;padding:12px 4px;font-size:10px}.tabs .btn.on{background:#5b8a3c}
+.grid{display:grid;grid-template-columns:repeat(4,64px);gap:6px;justify-content:center}
+.slot{position:relative;width:64px;height:64px;background:#8b8b8b;border:3px solid;border-color:#373737 #fff #fff #373737;display:flex;align-items:center;justify-content:center;font-size:26px}
+.slot canvas{width:44px;height:44px;image-rendering:pixelated}
+.slot b{position:absolute;right:3px;bottom:1px;font-size:10px;text-shadow:2px 2px #000}
+.stats{font-size:9px;line-height:2;text-align:center;background:rgba(0,0,0,.5);padding:8px;border:3px solid #000;width:min(90vw,420px)}
+.ov{position:absolute;inset:0;background:rgba(0,0,0,.72);display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;z-index:10;padding:12px;overflow:auto}
+.ov.show{display:flex}
+.ov h2{text-align:center;font-size:14px;margin:0 0 10px;text-shadow:2px 2px #000}
+.cards{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.card{width:min(88vw,200px);background:#c6c6c6;border:4px solid;border-color:#fff #555 #555 #fff;outline:3px solid #000;color:#373737;padding:10px;font:inherit;font-size:9px;line-height:1.6;cursor:pointer;text-align:center}
+.card:hover,.card:focus-visible{background:#d8e6ff}
+.card .ic{font-size:30px;display:block;margin-bottom:6px}.card b{display:block;font-size:11px;margin-bottom:6px}
+#toast{position:absolute;left:50%;top:8px;transform:translateX(-50%);background:rgba(0,0,0,.85);border:3px solid #ffd33d;padding:8px 12px;font-size:10px;z-index:20;display:none;max-width:92%;text-align:center}
+.btn:disabled{opacity:.5;cursor:default;background:#6b6b6b}
+#sc{width:min(90vw,420px);padding:26px 22px;text-align:center;color:#3a2410;background:radial-gradient(#e4cb94,#c9a468 80%,#9c763f);border-top:14px solid #5a3a1a;border-bottom:14px solid #5a3a1a;font-family:'Pirata One','Times New Roman',serif;border-radius:6px}
+#sc h3{margin:0 0 10px;font-size:30px;letter-spacing:2px}#sc p{font-size:23px;line-height:1.3;margin:0 0 10px}#sc small{display:block;font-size:19px;margin-bottom:14px;color:#6a1010}
+#sc .btn{font-family:'Press Start 2P',monospace}
+#stage.bossfx{box-shadow:inset 0 0 60px rgba(160,0,0,.6)}
+#pick{position:absolute;left:52%;top:-14%;width:50%;image-rendering:pixelated;pointer-events:none;transform-origin:6% 62%;z-index:2;filter:drop-shadow(3px 3px 0 rgba(0,0,0,.5))}
+.torch{position:absolute;top:24%;width:8px;height:34px;background:#6b4a2a;border:2px solid #000;display:none}
+.torch::before{content:'';position:absolute;left:-4px;top:-14px;width:12px;height:14px;background:#ffb02e;border:2px solid #7a3c00;animation:flick .25s infinite alternate}
+@keyframes flick{to{transform:scale(1.2,.85);background:#ffd33d}}
+#stage[data-biome="0"] .torch,#stage[data-biome="1"] .torch{display:block}
+#stal{position:absolute;left:0;right:0;top:0;height:26px;display:none;pointer-events:none;background:linear-gradient(135deg,#4a4a4a 25%,transparent 25%) -13px 0/26px 26px,linear-gradient(225deg,#4a4a4a 25%,transparent 25%) -13px 0/26px 26px}
+#stage[data-biome="1"] #stal{display:block}
+#lavaG{position:absolute;left:0;right:0;bottom:0;height:24%;display:none;pointer-events:none;background:linear-gradient(transparent,rgba(255,110,0,.6));animation:glow 1.4s infinite alternate}
+@keyframes glow{to{opacity:.5}}
+#stage[data-biome="2"] #lavaG{display:block}
+@media (max-width:420px){body{font-size:10px}.grid{grid-template-columns:repeat(4,56px)}.slot{width:56px;height:56px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <section id="menu" class="screen active">
+    <h1 class="logo">MINECRAFT<span>Mine Clicker</span></h1>
+    <button class="btn" id="bPlay">Играть</button>
+    <button class="btn" id="bShop">Магазин</button>
+    <button class="btn" id="bScores">Рекорды / Достижения</button>
+    <button class="btn" id="bSet">Настройки</button>
+  </section>
+
+  <section id="scores" class="screen">
+    <div class="panel"><h2>Рекорды</h2><div id="recs"></div><h2 style="margin-top:14px">Достижения</h2><div id="achs"></div></div>
+    <button class="btn back">Назад</button>
+  </section>
+
+  <section id="shopS" class="screen">
+    <div class="panel" id="shopP"></div>
+    <button class="btn back">Назад</button>
+  </section>
+
+  <section id="settings" class="screen">
+    <div class="panel"><h2>Настройки</h2></div>
+    <button class="btn" id="bSnd">Звук: вкл</button>
+    <button class="btn" id="bMus">Музыка: вкл</button>
+    <button class="btn" id="bReset">Сбросить прогресс</button>
+    <button class="btn back">Назад</button>
+  </section>
+
+  <section id="game" class="screen">
+    <div class="hud">
+      <div class="row"><span id="hB">Блоки: 0</span><span id="hD">Глубина: 0 м</span><span id="hM">Руда: 0</span><button class="btn mini" id="bPause" aria-label="Пауза">II</button></div>
+      <div class="row"><span id="hP" style="width:42%">Кирка</span><div class="bar dur"><i id="durF"></i><span id="durT"></span></div></div>
+      <div class="row"><span style="width:42%">Слой <b id="hL">1</b></span><div class="bar lay"><i id="layF"></i><span id="layT"></span></div></div>
+      <div id="buffs" style="min-height:14px;font-size:9px;color:#ffd33d"></div>
+    </div>
+    <div id="stage">
+      <div class="torch" style="left:7%"></div><div class="torch" style="right:7%"></div><div id="stal"></div><div id="lavaG"></div>
+      <div id="vMine">
+        <div id="bossBar" hidden><div id="bossN"></div><div class="bar boss"><i id="bossF"></i><span id="bossT"></span></div></div>
+        <div id="wrap"><canvas id="blk"></canvas><div id="ws">✦</div><canvas id="pick" width="16" height="16"></canvas></div>
+        <div id="hpbarW"><div class="bar hp"><i id="hpF"></i><span id="hpT"></span></div></div>
+        <div class="row" style="gap:6px"><button class="btn mini" id="cT" aria-label="Динамит">💣 0</button><button class="btn mini" id="cP" aria-label="Зелье спешки">🧪 0</button><button class="btn mini" id="fA">🍎 0</button><button class="btn mini" id="fS">🥩 0</button><button class="btn mini" id="fC">🥕 0</button></div>
+      </div>
+      <div id="vShop" class="panel" hidden></div>
+      <div id="vInv" hidden><div class="grid" id="grid"></div><div class="stats" id="stats"></div></div>
+      <canvas id="fx"></canvas>
+    </div>
+    <div class="hud" style="flex-direction:row;justify-content:space-between;font-size:13px;letter-spacing:1px"><div id="hearts"></div><div id="hunger"></div></div>
+    <div class="tabs"><button class="btn on" id="tM">Шахта</button><button class="btn" id="tI">Инвентарь</button><button class="btn" id="tS">Магазин</button></div>
+  </section>
+
+  <div class="ov" id="pause">
+    <h2>Пауза</h2>
+    <button class="btn" id="pResume">Продолжить</button>
+    <button class="btn" id="pSnd">Звук/Музыка: вкл</button>
+    <button class="btn" id="pMenu">В главное меню</button>
+    <button class="btn" id="pRestart">Сдаться (рестарт)</button>
+  </div>
+
+  <div class="ov" id="up">
+    <h2 id="upT">Слой пройден!</h2>
+    <div class="cards" id="cards"></div>
+    <button class="btn" id="bRand">🎲 Случайный выбор (Рандом)</button>
+  </div>
+  <div class="ov" id="scroll"><div id="sc"><h3>Предупреждение</h3><p>В пещере появился опасный противник, будьте готовы при встрече с ним!</p><small id="scN"></small><button class="btn" id="scGo">К бою!</button></div></div>
+  <div id="toast"></div>
+</div>
+
+<script>
+'use strict';
+/* ============ Утилиты ============ */
+const $ = s => document.querySelector(s);
+const mul = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const rnd = (a, b) => a + Math.random() * (b - a);
+const num = n => n >= 1e4 ? (n / 1e3).toFixed(1) + 'k' : String(Math.round(n * 10) / 10);
+
+/* ============ Данные ============ */
+const ST = ['#7d7d7d', '#8a8a8a', '#6e6e6e', '#767676'];
+const BL = {
+  stone:    { n: 'Камень', r: 'Булыжник', c: ST, h: 1, min: 0, w: 10 },
+  coal:     { n: 'Угольная руда', r: 'Уголь', c: ST, o: '#1c1c1c', h: 1.4, min: 1, w: 6 },
+  iron:     { n: 'Железная руда', r: 'Железо', c: ST, o: '#d8af93', h: 2, min: 2, w: 5 },
+  gold:     { n: 'Золотая руда', r: 'Золото', c: ST, o: '#fcee4b', h: 2.6, min: 3, w: 4 },
+  diamond:  { n: 'Алмазная руда', r: 'Алмазы', c: ST, o: '#5decf5', h: 4, min: 4, w: 3 },
+  obsidian: { n: 'Обсидиан', r: 'Обсидиан', c: ['#14091f', '#1e0f33', '#0c0614', '#2a1647'], o: '#6a3fb0', h: 7, min: 5, w: 3 },
+  redstone: { n: 'Редстоун', r: 'Редстоун', c: ST, o: '#e01919', h: 1, w: 0 },
+  emerald:  { n: 'Изумруд', r: 'Изумруд', c: ST, o: '#18d65a', h: 1, w: 0 },
+  netherstar: { n: 'Звезда Незера', r: 'Звезда Незера', c: ['#c8c8c8', '#f0f0f0', '#b0b0b0', '#e2e2e2'], o: '#ffe94d', h: 1, w: 0 },
+  lava:     { n: 'Лавовый монолит', c: ['#3b0d0d', '#5a1a0a', '#2a0808', '#4a1010'], o: '#ff7a00', h: 1, w: 0, boss: 1 },
+  guardian: { n: 'Древний страж', c: ['#2a7a72', '#3a9a8e', '#1f5f5a', '#338a80'], o: '#f4d98b', h: 1, w: 0, boss: 1 }
+};
+const ITEMS = ['stone', 'coal', 'iron', 'gold', 'diamond', 'obsidian', 'redstone', 'emerald', 'netherstar'];
+const PK = [['Деревянная', 1], ['Каменная', 2.2], ['Железная', 4.5], ['Алмазная', 9], ['Незеритовая', 18]];
+
+const UP = [
+  { t: 'Новая кирка', i: '⛏️', w: 3, ok: () => S.pick < 4, d: () => PK[S.pick + 1][0] + ' кирка: урон ×' + (PK[S.pick + 1][1] / PK[S.pick][1]).toFixed(1) + ', полный ремонт, прочность +20', go: () => { S.pick++; S.maxDur += 20; S.dur = S.maxDur; } },
+  { t: 'Эффективность', i: '✨', w: 3, ok: () => S.eff < 5, d: () => 'Ур. ' + (S.eff + 1) + ': 10% шанс двойного урона и 2% шанс сломать блок с одного удара', go: () => S.eff++ },
+  { t: 'Прочность', i: '🛡️', w: 2, ok: () => S.unb < 5, d: () => 'Ур. ' + (S.unb + 1) + ': износ кирки при ударе ещё на 30% ниже', go: () => S.unb++ },
+  { t: 'Починка', i: '🔧', w: 2, ok: () => S.mend < 4, d: () => 'Ур. ' + (S.mend + 1) + ': +25 прочности за каждый пройденный слой', go: () => S.mend++ },
+  { t: 'Житель-шахтёр', i: '🧑‍🌾', w: 3, ok: () => S.auto < 10, d: () => 'Ещё один работник: +2.5 урона в секунду автоматически', go: () => S.auto++ },
+  { t: 'Удача', i: '🍀', w: 2, ok: () => S.fort < 5, d: () => 'Ур. ' + (S.fort + 1) + ': 8% шанс найти редстоун или изумруд, они дают бафф на 10 с', go: () => S.fort++ },
+  { t: 'Наковальня', i: '⚒️', w: 1, ok: () => S.dur < S.maxDur * .7, d: () => 'Полностью чинит кирку', go: () => { S.dur = S.maxDur; } }
+];
+
+const AC = [
+  ['first', 'Первый блок', 'Добыть 1 блок', s => s.mined >= 1],
+  ['m50', 'Шахтёр', 'Добыть 50 блоков', s => s.mined >= 50],
+  ['m150', 'Глубокая шахта', 'Добыть 150 блоков', s => s.mined >= 150],
+  ['dia', 'Алмазы!', 'Добыть алмазную руду', s => s.inv.diamond > 0],
+  ['obs', 'Тёмный камень', 'Добыть обсидиан', s => s.inv.obsidian > 0],
+  ['crit', 'Меткий глаз', '25 критических ударов за забег', s => s.crits >= 25],
+  ['em', 'Счастливчик', 'Найти изумруд', s => s.inv.emerald > 0],
+  ['net', 'Незерит', 'Получить незеритовую кирку', s => s.pick >= 4],
+  ['boss', 'Победитель боссов', 'Победить босса', s => s.bosses >= 1]
+];
+
+/* ============ Хранилище ============ */
+const Store = {
+  d: { best: { mined: 0, depth: 0, bosses: 0, runs: 0 }, ach: {}, snd: 1, mus: 1, coins: 0, shop: {}, cons: {}, armor: 0, food: {} },
+  load() { try { const j = JSON.parse(localStorage.getItem('mmc1')); if (j) Object.assign(this.d, j); } catch (e) {} },
+  save() { try { localStorage.setItem('mmc1', JSON.stringify(this.d)); } catch (e) {} }
+};
+
+/* ============ Звук ============ */
+const Snd = {
+  ctx: null,
+  start() {
+    if (!this.ctx) { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+  },
+  tone(f, d, type, v, to, mus) {
+    if (!this.ctx || !(mus ? Store.d.mus : Store.d.snd)) return;
+    const o = this.ctx.createOscillator(), g = this.ctx.createGain(), t = this.ctx.currentTime;
+    o.type = type; o.frequency.setValueAtTime(f, t);
+    if (to) o.frequency.exponentialRampToValueAtTime(to, t + d);
+    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+    o.connect(g); g.connect(this.ctx.destination); o.start(t); o.stop(t + d);
+  },
+  hit(c) { c ? this.tone(660, .14, 'triangle', .09, 1300) : this.tone(rnd(120, 190), .07, 'square', .05, 70); },
+  brk() { this.tone(110, .22, 'sawtooth', .07, 40); },
+  win() { [392, 523, 659, 784].forEach((f, i) => setTimeout(() => this.tone(f, .2, 'square', .06), i * 110)); },
+  note() { if (S && !S.paused) this.tone([220, 262, 294, 330, 392, 440][Math.random() * 6 | 0], .9, 'triangle', .03, 0, true); }
+};
+
+/* ============ Состояние ============ */
+let S = null;
+const fresh = () => ({
+  mined: 0, layerM: 0, layer: 1, pick: 0, eff: 0, unb: 0, mend: 0, auto: 0, fort: 0,
+  dur: 100, maxDur: 100, inv: {}, buffs: { haste: 0, power: 0 }, beacons: 0, bosses: 0, nextBoss: 100,
+  clicks: 0, crits: 0, paused: false, view: 0, blk: null, ws: { x: .5, y: .5 }, bossT: 0, bossMax: 30, hp: 10, food: 100, atk: 4, up: 0
+});
+const dmg = () => { let d = PK[S.pick][1] * (1 + .15 * S.beacons) * (1 + .1 * (Store.d.shop.dmg || 0)); d *= S.food >= 90 ? 1.15 : S.food <= 0 ? .4 : 1; if (S.dur <= 0) d *= .3; if (S.buffs.power > 0) d *= 2; return d; };
+const dps = () => { let a = S.auto * 2.5; if (S.buffs.haste > 0) a = a * 2 + 4; return a * (1 + S.pick * .35) * (1 + .15 * S.beacons) * (S.food <= 0 ? .4 : 1); };
+const add = k => { S.inv[k] = (S.inv[k] || 0) + 1; };
+const ores = () => ITEMS.reduce((a, k) => a + (k === 'stone' ? 0 : (S.inv[k] || 0)), 0);
+
+/* ============ Рисование блоков ============ */
+function paint(cv, k, seed, cracks) {
+  const d = BL[k], g = cv.getContext('2d'), r = mul(seed || 1);
+  cv.width = cv.height = 16;
+  for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) { g.fillStyle = d.c[r() * d.c.length | 0]; g.fillRect(x, y, 1, 1); }
+  if (d.o) for (let i = 0; i < (d.boss ? 9 : 6); i++) {
+    const x = 1 + r() * 12 | 0, y = 1 + r() * 12 | 0;
+    [[0, 0], [1, 0], [0, 1], [1, 1]].forEach(([a, b]) => { if (r() < .85) { g.fillStyle = d.o; g.fillRect(x + a, y + b, 1, 1); } });
+  }
+  g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(0, 15, 16, 1); g.fillRect(15, 0, 1, 16);
+  g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(0, 0, 16, 1); g.fillRect(0, 0, 1, 16);
+  if (cracks) { g.fillStyle = 'rgba(0,0,0,.65)'; cracks.forEach(p => g.fillRect(p[0], p[1], 1, 1)); }
+}
+function mkCracks(seed) {
+  const r = mul(seed + 7), pts = [];
+  for (let w = 0; w < 3; w++) {
+    let x = 4 + r() * 8 | 0, y = 4 + r() * 8 | 0;
+    for (let i = 0; i < 22; i++) { x = Math.max(0, Math.min(15, x + (r() * 3 | 0) - 1)); y = Math.max(0, Math.min(15, y + (r() * 3 | 0) - 1)); pts.push([x, y]); }
+  }
+  return pts;
+}
+
+/* ============ Эффекты ============ */
+const blk = $('#blk'), fxc = $('#fx'), fg = fxc.getContext('2d'), stage = $('#stage');
+let parts = [];
+function fit() { const r = stage.getBoundingClientRect(); fxc.width = r.width; fxc.height = r.height; }
+new ResizeObserver(fit).observe(stage);
+function fx(cx, cy, n) {
+  if (!S || !S.blk) return;
+  const r = stage.getBoundingClientRect(), d = BL[S.blk.k], cols = d.c.concat(d.o || []);
+  for (let i = 0; i < n; i++) parts.push({ x: cx - r.left, y: cy - r.top, vx: rnd(-3, 3), vy: rnd(-5, -1), l: rnd(25, 50), c: cols[Math.random() * cols.length | 0], s: rnd(3, 7) });
+}
+function loop() {
+  fg.clearRect(0, 0, fxc.width, fxc.height);
+  if (S && S.biome === 2 && !S.paused && Math.random() < .35) parts.push({ x: rnd(0, fxc.width), y: fxc.height, vx: rnd(-.6, .6), vy: rnd(-4, -1.5), l: 70, c: Math.random() < .5 ? '#ff9a1f' : '#ffd33d', s: 3, g: .03 });
+  parts = parts.filter(p => p.l > 0);
+  parts.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += p.g === undefined ? .35 : p.g; p.l--; fg.fillStyle = p.c; fg.fillRect(p.x, p.y, p.s, p.s); });
+  requestAnimationFrame(loop);
+}
+function pop(cx, cy, d, crit) {
+  const r = stage.getBoundingClientRect(), e = document.createElement('div');
+  e.className = 'pop' + (crit ? ' c' : ''); e.textContent = '-' + num(d);
+  e.style.left = (cx - r.left - 10) + 'px'; e.style.top = (cy - r.top - 20) + 'px';
+  stage.appendChild(e); setTimeout(() => e.remove(), 700);
+}
+function shake() { blk.animate([{ transform: 'rotate(-3deg) scale(.95)' }, { transform: 'rotate(2deg) scale(1.03)' }, { transform: 'none' }], { duration: 140 }); }
+const PKART = ['....mmmmmm......', '..mmmmmmmmmm....', '.mm.....hmmmm...', 'mm.....hh..mm...', 'm.....hh....mm..', '.....hh.....mm..', '....hh.......m..', '...hh...........', '..hh............', '.hh.............', 'hh..............'];
+const PKC = ['#a07040', '#9a9a9a', '#e8e8e8', '#4eecd8', '#4a3f45'];
+function paintPick() {
+  const g = $('#pick').getContext('2d'); g.clearRect(0, 0, 16, 16);
+  PKART.forEach((row, y) => [...row].forEach((ch, x) => { if (ch === '.') return; g.fillStyle = ch === 'h' ? '#6b4a2a' : PKC[S.pick]; g.fillRect(x, y, 1, 1); }));
+}
+function swing() { $('#pick').animate([{ transform: 'rotate(0)' }, { transform: 'rotate(-40deg)', offset: .35 }, { transform: 'rotate(18deg) translate(-14px,10px)', offset: .7 }, { transform: 'rotate(0)' }], { duration: 170 }); }
+const TILES = {};
+function tile(b) {
+  if (TILES[b]) return TILES[b];
+  const c = document.createElement('canvas'), g = c.getContext('2d'), r = mul(b + 3); c.width = c.height = 16;
+  const P = [['#6b4a2e', '#5a3d25', '#7a5535', '#4a321e'], ['#6a6a6a', '#5c5c5c', '#777777', '#505050'], ['#6e2424', '#8a2f2f', '#521a1a', '#7a2a1a']][b];
+  for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) { g.fillStyle = P[r() * 4 | 0]; g.fillRect(x, y, 1, 1); }
+  if (b === 0) { g.fillStyle = '#4f9a3a'; g.fillRect(0, 0, 16, 3); g.fillStyle = '#3d7a2c'; for (let x = 0; x < 16; x += 2) g.fillRect(x, 3, 1, 1); }
+  if (b === 1) [['#1c1c1c', 3], ['#d8af93', 2]].forEach(([col, n]) => { g.fillStyle = col; for (let i = 0; i < n; i++) g.fillRect(r() * 14 | 0, 3 + r() * 11 | 0, 2, 2); });
+  if (b === 2) { g.fillStyle = '#ff6a00'; for (let i = 0; i < 3; i++) g.fillRect(r() * 14 | 0, r() * 15 | 0, 2, 1); }
+  return TILES[b] = c.toDataURL();
+}
+function setBiome() {
+  const b = S.layer < 4 ? 0 : S.layer < 9 ? 1 : 2;
+  if (S.biome === b) return;
+  S.biome = b; stage.style.backgroundImage = 'url(' + tile(b) + ')'; stage.dataset.biome = b;
+  toast('Биом: ' + ['Поверхность', 'Каменная пещера', 'Нижний мир'][b]);
+}
+let toastT;
+function toast(m) { const t = $('#toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toastT); toastT = setTimeout(() => t.style.display = 'none', 2200); }
+
+/* ============ Игровая логика ============ */
+function nextKey() {
+  const L = S.mined / 15 | 0, p = Object.entries(BL).filter(([, d]) => d.w && L >= d.min);
+  let x = Math.random() * p.reduce((a, [, d]) => a + d.w, 0);
+  for (const [k, d] of p) if ((x -= d.w) < 0) return k;
+  return 'stone';
+}
+function moveWs() { S.ws = { x: rnd(.2, .8), y: rnd(.2, .8) }; }
+function newBlock() {
+  const boss = S.mined >= S.nextBoss, k = boss ? (S.bosses % 2 ? 'guardian' : 'lava') : nextKey();
+  const hp = Math.round(6 * (1 + S.mined * .07) * BL[k].h * (boss ? 9 : 1)), seed = Math.random() * 1e9 | 0;
+  S.blk = { k, hp, max: hp, seed, boss, cr: mkCracks(seed) };
+  if (boss) { S.bossMax = S.bossT = 30 + S.beacons * 3; S.atk = 4; showScroll(); }
+  moveWs(); setBiome(); render(); saveRun();
+}
+function click(e) {
+  if (!S || S.paused || S.view) return;
+  Snd.start();
+  const r = blk.getBoundingClientRect(), nx = (e.clientX - r.left) / r.width, ny = (e.clientY - r.top) / r.height;
+  const crit = Math.hypot(nx - S.ws.x, ny - S.ws.y) < .17;
+  let d = dmg();
+  S.clicks++;
+  if (crit) { d *= 3; S.crits++; moveWs(); } else if (S.clicks % 5 === 0) moveWs();
+  if (Math.random() < .1 * S.eff) d *= 2;
+  if (!S.blk.boss && Math.random() < .02 * S.eff) d = S.blk.hp;
+  S.dur = Math.max(0, S.dur - .5 * Math.pow(.7, S.unb)); S.food = Math.max(0, S.food - .2);
+  shake(); swing(); fx(e.clientX, e.clientY, crit ? 14 : 6); Snd.hit(crit); pop(e.clientX, e.clientY, d, crit);
+  damage(d);
+}
+function damage(d) { S.blk.hp -= d; if (S.blk.hp <= 0) breakBlock(); else render(); }
+function breakBlock() {
+  const b = S.blk, r = blk.getBoundingClientRect();
+  fx(r.left + r.width / 2, r.top + r.height / 2, 40);
+  Snd.brk();
+  if (b.boss) {
+    S.bosses++; S.beacons++; S.nextBoss += 100; S.inv.beacon = S.beacons;
+    add('netherstar'); const cc = 150 * S.bosses; Store.d.coins += cc; toast('Босс повержен! +' + cc + ' монет, Звезда Незера и Маяк'); Snd.win(); check(); save(); newBlock(); return;
+  }
+  S.mined++; S.layerM++; add(b.k);
+  if (Math.random() < .08 * S.fort) {
+    const k = Math.random() < .65 ? 'redstone' : 'emerald';
+    add(k); S.buffs[k === 'redstone' ? 'haste' : 'power'] = 10 + 2 * S.fort;
+    toast(k === 'redstone' ? 'Редстоун! Спешка: авто-урон выше' : 'Изумруд! Сила: урон ×2');
+  }
+  check(); save();
+  if (S.layerM >= 15) { S.layerM = 0; S.layer++; levelUp(); } else newBlock();
+}
+function levelUp() {
+  S.paused = true; S.up = 1;
+  S.dur = Math.min(S.maxDur, S.dur + 20 + S.mend * 25);
+  const pool = UP.filter(u => u.ok()), picks = [];
+  while (picks.length < 3 && pool.length) {
+    let x = Math.random() * pool.reduce((a, u) => a + u.w, 0), i = 0;
+    for (; i < pool.length - 1; i++) if ((x -= pool[i].w) < 0) break;
+    picks.push(pool.splice(i, 1)[0]);
+  }
+  $('#upT').textContent = 'Слой ' + (S.layer - 1) + ' пройден! Выбери улучшение';
+  const box = $('#cards'); box.innerHTML = '';
+  picks.forEach(u => {
+    const c = document.createElement('button'); c.className = 'card';
+    c.innerHTML = '<span class="ic">' + u.i + '</span><b>' + u.t + '</b>' + u.d();
+    c.onclick = () => { S.up = 0; u.go(); $('#up').classList.remove('show'); S.paused = false; check(); newBlock(); };
+    box.appendChild(c);
+  });
+  $('#bRand').onclick = () => { if (box.children.length) box.children[Math.random() * box.children.length | 0].click(); };
+  $('#up').classList.add('show');
+}
+function check() {
+  AC.forEach(a => { if (!Store.d.ach[a[0]] && a[3](S)) { Store.d.ach[a[0]] = 1; toast('Достижение: ' + a[1]); Store.save(); } });
+}
+function save() {
+  const b = Store.d.best;
+  b.mined = Math.max(b.mined, S.mined); b.depth = Math.max(b.depth, S.mined * 2); b.bosses = Math.max(b.bosses, S.bosses);
+  Store.save();
+}
+function tick(dt) {
+  if (!S || S.paused) return;
+  S.food = Math.max(0, S.food - .1 * dt);
+  if (S.food <= 0) S.hp -= dt / 6; else if (S.food >= 60 && S.hp < 10) S.hp = Math.min(10, S.hp + dt / 10);
+  if (S.hp <= 0) { defeat(); return; }
+  if (S.blk.boss) { S.atk -= dt; if (S.atk <= 0) { S.atk = 4; hurt(1.5 + .5 * S.bosses); if (S.paused) return; } }
+  ['haste', 'power'].forEach(k => { if (S.buffs[k] > 0) S.buffs[k] = Math.max(0, S.buffs[k] - dt); });
+  if (S.blk.boss) {
+    S.bossT -= dt;
+    if (S.bossT <= 0) { toast('Босс сбежал! Вернётся через 20 блоков'); S.nextBoss = S.mined + 20; newBlock(); return; }
+  }
+  const a = dps(); if (a > 0) damage(a * dt);
+  hud();
+}
+
+/* ============ Отрисовка интерфейса ============ */
+function render() {
+  const b = S.blk, p = 1 - Math.max(0, b.hp) / b.max;
+  paint(blk, b.k, b.seed, b.cr.slice(0, Math.floor(p * b.cr.length)));
+  $('#wrap').style.scale = 1 - p * .3; stage.classList.toggle('bossfx', !!b.boss);
+  $('#hpF').style.width = (100 - p * 100) + '%';
+  $('#hpT').textContent = BL[b.k].n + ' ' + num(Math.max(0, b.hp)) + '/' + num(b.max);
+  $('#ws').style.left = (S.ws.x * 100) + '%'; $('#ws').style.top = (S.ws.y * 100) + '%';
+  $('#bossBar').hidden = !b.boss;
+  hud();
+}
+function hud() {
+  $('#hB').textContent = 'Блоки: ' + S.mined;
+  $('#hD').textContent = 'Глубина: ' + (S.mined * 2) + ' м';
+  $('#hM').textContent = 'Монеты: ' + Store.d.coins;
+  if (S.pk !== S.pick) { S.pk = S.pick; paintPick(); }
+  $('#cT').textContent = '💣 ' + (Store.d.cons.tnt || 0); $('#cP').textContent = '🧪 ' + (Store.d.cons.potion || 0);
+  FD.forEach(f => $('#' + f.b).textContent = f.e + ' ' + (Store.d.food[f.id] || 0));
+  const hs = Math.ceil(S.hp * 2) + '|' + Math.ceil(S.food / 10);
+  if (hs !== hk) { hk = hs; let H = '', F = ''; for (let i = 0; i < 10; i++) { H += '<span style="opacity:' + (S.hp > i ? 1 : .25) + '">❤️</span>'; F += '<span style="opacity:' + (S.food > i * 10 ? 1 : .25) + '">🍗</span>'; } $('#hearts').innerHTML = H; $('#hunger').innerHTML = F; }
+  $('#hP').textContent = PK[S.pick][0] + ' кирка' + (S.beacons ? ' ★' + S.beacons : '');
+  $('#durF').style.width = (S.dur / S.maxDur * 100) + '%';
+  $('#durT').textContent = Math.ceil(S.dur) + '/' + S.maxDur + (S.dur <= 0 ? ' сломана' : '');
+  $('#hL').textContent = S.layer;
+  $('#layF').style.width = (S.layerM / 15 * 100) + '%';
+  $('#layT').textContent = S.layerM + '/15';
+  const bf = [];
+  if (S.buffs.haste > 0) bf.push('Спешка ' + Math.ceil(S.buffs.haste) + 'с');
+  if (S.buffs.power > 0) bf.push('Сила ' + Math.ceil(S.buffs.power) + 'с');
+  if (dps() > 0) bf.push('DPS ' + num(dps()));
+  $('#buffs').textContent = bf.join('   ');
+  if (S.blk.boss) {
+    $('#bossN').textContent = BL[S.blk.k].n;
+    $('#bossF').style.width = (S.bossT / S.bossMax * 100) + '%';
+    $('#bossT').textContent = Math.ceil(S.bossT) + ' с';
+  }
+}
+function invRender() {
+  const g = $('#grid'); g.innerHTML = '';
+  ITEMS.forEach(k => {
+    const s = document.createElement('div'); s.className = 'slot'; s.title = BL[k].r;
+    const c = document.createElement('canvas'); paint(c, k, 5); s.appendChild(c);
+    const n = document.createElement('b'); n.textContent = S.inv[k] || 0; s.appendChild(n); g.appendChild(s);
+  });
+  const m = document.createElement('div'); m.className = 'slot'; m.title = 'Маяк'; m.innerHTML = '🔆<b>' + S.beacons + '</b>'; g.appendChild(m);
+  $('#stats').innerHTML = 'Кирка: ' + PK[S.pick][0] + ' (урон ' + num(dmg()) + ')<br>Эффективность: ' + S.eff + ' &nbsp; Прочность: ' + S.unb + '<br>Починка: ' + S.mend + ' &nbsp; Удача: ' + S.fort + '<br>Жители-шахтёры: ' + S.auto + ' &nbsp; Маяки: ' + S.beacons + '<br>Броня: ' + (Store.d.armor ? AR[Store.d.armor - 1][0] : 'нет');
+}
+function setView(v) {
+  if (!S) return;
+  S.view = v; $('#vMine').hidden = v !== 0; $('#vInv').hidden = v !== 1; $('#vShop').hidden = v !== 2;
+  ['tM', 'tI', 'tS'].forEach((id, i) => $('#' + id).classList.toggle('on', i === v));
+  if (v === 1) invRender();
+  if (v === 2) shopRender($('#vShop'));
+}
+
+/* ============ Экраны и меню ============ */
+function go(id) { document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id)); }
+function endRun() {
+  if (!S) return;
+  S.paused = true; save(); Store.d.best.runs++;
+  const t = ITEMS.reduce((a, k) => a + (S.inv[k] || 0) * price(k), 0) >> 1;
+  if (t) { Store.d.coins += t; toast('Остатки проданы: +' + t + ' монет'); }
+  Store.save();
+}
+function start(cont) {
+  Snd.start(); const old = cont ? loadRun() : null; S = old || fresh();
+  if (!old) { const sh = Store.d.shop; S.maxDur += 20 * (sh.dur || 0); S.dur = S.maxDur; S.auto += sh.auto || 0; } $('#pause').classList.remove('show'); $('#up').classList.remove('show');
+  go('game'); setView(0); fit(); if (old) { setBiome(); render(); } else newBlock();
+}
+function syncBtns() {
+  const on = v => v ? 'вкл' : 'выкл';
+  try { $('#bPlay').textContent = localStorage.getItem('mmc_run') ? 'Продолжить' : 'Играть'; } catch (e) {}
+  $('#bSnd').textContent = 'Звук: ' + on(Store.d.snd); $('#bMus').textContent = 'Музыка: ' + on(Store.d.mus);
+  $('#pSnd').textContent = 'Звук/Музыка: ' + on(Store.d.snd || Store.d.mus);
+}
+function scoresRender() {
+  const b = Store.d.best;
+  $('#recs').innerHTML = '<div class="ach">Макс. блоков: ' + b.mined + '</div><div class="ach">Макс. глубина: ' + b.depth + ' м</div><div class="ach">Боссов повержено: ' + b.bosses + '</div><div class="ach">Забегов: ' + b.runs + '</div>';
+  $('#achs').innerHTML = AC.map(a => '<div class="ach ' + (Store.d.ach[a[0]] ? 'on' : 'off') + '">' + (Store.d.ach[a[0]] ? '✔ ' : '✖ ') + a[1] + ' — ' + a[2] + '</div>').join('');
+}
+function pause(on) { if (!S || $('#up').classList.contains('show')) return; S.paused = on; $('#pause').classList.toggle('show', on); }
+
+$('#bPlay').onclick = () => start(true);
+$('#bScores').onclick = () => { scoresRender(); go('scores'); };
+$('#bSet').onclick = () => { syncBtns(); go('settings'); };
+document.querySelectorAll('.back').forEach(b => b.onclick = () => go('menu'));
+$('#bSnd').onclick = () => { Store.d.snd ^= 1; Store.save(); syncBtns(); };
+$('#bMus').onclick = () => { Store.d.mus ^= 1; Store.save(); syncBtns(); };
+let rst = 0;
+$('#bReset').onclick = () => {
+  if (!rst) { rst = 1; $('#bReset').textContent = 'Точно? Нажми ещё раз'; setTimeout(() => { rst = 0; $('#bReset').textContent = 'Сбросить прогресс'; }, 3000); return; }
+  rst = 0; $('#bReset').textContent = 'Сбросить прогресс';
+  try { localStorage.removeItem('mmc_run'); } catch (e) {}
+  Object.assign(Store.d, { best: { mined: 0, depth: 0, bosses: 0, runs: 0 }, ach: {}, coins: 0, shop: {}, cons: {}, armor: 0, food: {} });
+  S = null; Store.save(); syncBtns(); toast('Прогресс сброшен');
+};
+$('#bPause').onclick = () => pause(true);
+$('#pResume').onclick = () => pause(false);
+$('#pSnd').onclick = () => { const v = (Store.d.snd || Store.d.mus) ? 0 : 1; Store.d.snd = Store.d.mus = v; Store.save(); syncBtns(); };
+$('#pMenu').onclick = () => { save(); saveRun(); S = null; $('#pause').classList.remove('show'); syncBtns(); go('menu'); };
+$('#pRestart').onclick = () => { endRun(); start(); };
+$('#tM').onclick = () => setView(0);
+$('#tI').onclick = () => setView(1);
+$('#tS').onclick = () => setView(2);
+$('#bShop').onclick = () => { shopRender($('#shopP')); go('shopS'); };
+$('#shopP').onclick = shopClick;
+$('#vShop').onclick = shopClick;
+$('#cT').onclick = () => {
+  if (!S || S.paused || S.view || !Store.d.cons.tnt) return;
+  Store.d.cons.tnt--; Store.save(); shake(); Snd.brk();
+  damage(S.blk.boss ? S.blk.max * .25 : S.blk.hp);
+};
+$('#cP').onclick = () => {
+  if (!S || S.paused || S.view || !Store.d.cons.potion) return;
+  Store.d.cons.potion--; Store.save(); S.buffs.haste = Math.max(S.buffs.haste, 20); toast('Спешка на 20 с'); hud();
+};
+blk.addEventListener('pointerdown', e => { e.preventDefault(); click(e); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) { pause(true); saveRun(); } });
+addEventListener('pagehide', () => { if (S) { save(); saveRun(); } Store.save(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && S) pause(!S.paused); });
+
+/* ============ Выживание, сохранение, боссы ============ */
+const AR = [['Кожаная', 40, 10], ['Кольчужная', 120, 22], ['Железная', 300, 36], ['Алмазная', 700, 50], ['Незеритовая', 1600, 65]];
+const FD = [
+  { id: 'apple', n: 'Яблоко', d: '+25 сытости', cost: 8, f: 25, h: 0, b: 'fA', e: '🍎' },
+  { id: 'steak', n: 'Стейк', d: '+60 сытости', cost: 25, f: 60, h: 0, b: 'fS', e: '🥩' },
+  { id: 'carrot', n: 'Золотая морковь', d: '+100 сытости, +4 сердца', cost: 60, f: 100, h: 4, b: 'fC', e: '🥕' }
+];
+let hk = '';
+function loadRun() {
+  try { const j = JSON.parse(localStorage.getItem('mmc_run')); if (j && j.blk) { const s = Object.assign(fresh(), j); s.paused = false; s.view = 0; s.up = 0; delete s.biome; delete s.pk; return s; } } catch (e) {}
+  return null;
+}
+function saveRun() { if (S && !S.up) try { localStorage.setItem('mmc_run', JSON.stringify(S)); } catch (e) {} }
+function hurt(h) {
+  const r = Store.d.armor ? AR[Store.d.armor - 1][2] / 100 : 0;
+  h = Math.max(.5, Math.round(h * (1 - r) * 2) / 2); S.hp -= h;
+  stage.animate([{ boxShadow: 'inset 0 0 90px 20px rgba(255,0,0,.9)' }, { boxShadow: 'inset 0 0 0 0 rgba(255,0,0,0)' }], { duration: 450 });
+  stage.animate([{ transform: 'translateX(-6px)' }, { transform: 'translateX(6px)' }, { transform: 'none' }], { duration: 200 });
+  Snd.tone(90, .25, 'sawtooth', .08, 50); toast('Босс бьёт: −' + h + ' ❤');
+  if (S.hp <= 0) defeat();
+}
+function defeat() {
+  const b = S.blk && S.blk.boss;
+  ITEMS.forEach(k => S.inv[k] = (S.inv[k] || 0) >> 1);
+  S.mined -= S.layerM; S.layerM = 0; S.hp = 10; S.food = Math.max(S.food, 40);
+  if (b) S.nextBoss = S.mined + 20;
+  toast('Поражение! Откат на чекпоинт, ресурсы −50%'); Snd.tone(70, .5, 'sawtooth', .1, 30); newBlock();
+}
+function showScroll() {
+  S.paused = true;
+  const t = Math.min(S.bosses, 4), sc = $('#sc');
+  $('#scN').textContent = BL[S.blk.k].n + ' · Опасность: ' + '☠'.repeat(t + 1);
+  sc.style.filter = 'brightness(' + (1 - .15 * t) + ') saturate(' + (1 + .25 * t) + ')';
+  sc.style.boxShadow = '0 0 ' + (20 + t * 14) + 'px rgba(150,0,0,' + (.35 + .12 * t) + ')';
+  $('#scroll').classList.add('show');
+}
+$('#scGo').onclick = () => { $('#scroll').classList.remove('show'); S.paused = false; };
+FD.forEach(f => $('#' + f.b).onclick = () => {
+  if (!S || S.paused || !Store.d.food[f.id]) return;
+  Store.d.food[f.id]--; S.food = Math.min(100, S.food + f.f); S.hp = Math.min(10, S.hp + f.h); Store.save(); hk = ''; hud();
+});
+
+/* ============ Магазин ============ */
+const PR = { stone: 1, coal: 3, iron: 6, gold: 12, diamond: 40, obsidian: 25, redstone: 8, emerald: 30, netherstar: 250 };
+const SH = [
+  { id: 'dmg', n: 'Закалка кирки', d: '+10% урона', base: 25, max: 10 },
+  { id: 'dur', n: 'Запас прочности', d: '+20 прочности со старта забега', base: 20, max: 5 },
+  { id: 'auto', n: 'Житель при старте', d: '+1 шахтёр со старта забега', base: 60, max: 3 },
+  { id: 'coin', n: 'Торговец', d: '+10% к цене продажи', base: 30, max: 5 }
+];
+const CN = [
+  { id: 'tnt', n: 'Динамит', d: 'Ломает блок сразу (боссу −25% HP)', cost: 30 },
+  { id: 'potion', n: 'Зелье спешки', d: 'Спешка на 20 с', cost: 40 }
+];
+const price = k => Math.round(PR[k] * (1 + .1 * (Store.d.shop.coin || 0)));
+const cost = i => Math.round(i.base * Math.pow(1.7, Store.d.shop[i.id] || 0));
+function shopRender(el) {
+  const d = Store.d, inv = S ? S.inv : {};
+  let h = '<h2>Магазин: ' + d.coins + ' монет</h2><div class="ach"><b>Продажа ресурсов</b>' + (S ? '' : ' (доступна во время игры)') + '</div>';
+  ITEMS.forEach(k => { const n = inv[k] || 0; h += '<div class="ach row"><span>' + BL[k].r + ' ×' + n + '</span><button class="btn mini" data-s="' + k + '"' + (n ? '' : ' disabled') + '>+' + n * price(k) + '</button></div>'; });
+  h += '<div class="ach"><b>Постоянные баффы</b></div>';
+  SH.forEach(i => { const l = d.shop[i.id] || 0, m = l >= i.max; h += '<div class="ach row"><span>' + i.n + ' ' + l + '/' + i.max + '<br>' + i.d + '</span><button class="btn mini" data-b="' + i.id + '"' + (m || d.coins < cost(i) ? ' disabled' : '') + '>' + (m ? 'макс' : cost(i)) + '</button></div>'; });
+  h += '<div class="ach"><b>Броня</b> (снижает урон боссов)</div>';
+  AR.forEach((a, i) => { const own = d.armor > i; h += '<div class="ach row"><span>' + a[0] + ' −' + a[2] + '%</span><button class="btn mini" data-a="' + i + '"' + (own || d.armor !== i || d.coins < a[1] ? ' disabled' : '') + '>' + (own ? '✔' : a[1]) + '</button></div>'; });
+  h += '<div class="ach"><b>Еда</b></div>';
+  FD.forEach(f => { h += '<div class="ach row"><span>' + f.n + ' (есть ' + (d.food[f.id] || 0) + ')<br>' + f.d + '</span><button class="btn mini" data-f="' + f.id + '"' + (d.coins < f.cost ? ' disabled' : '') + '>' + f.cost + '</button></div>'; });
+  h += '<div class="ach"><b>Расходники</b></div>';
+  CN.forEach(i => { h += '<div class="ach row"><span>' + i.n + ' (есть ' + (d.cons[i.id] || 0) + ')<br>' + i.d + '</span><button class="btn mini" data-c="' + i.id + '"' + (d.coins < i.cost ? ' disabled' : '') + '>' + i.cost + '</button></div>'; });
+  el.innerHTML = h;
+}
+function shopClick(e) {
+  const b = e.target.closest('button'), d = Store.d;
+  if (!b || b.disabled) return;
+  if (b.dataset.s) { const k = b.dataset.s; d.coins += (S.inv[k] || 0) * price(k); S.inv[k] = 0; }
+  else if (b.dataset.b) { const i = SH.find(x => x.id === b.dataset.b); d.coins -= cost(i); d.shop[i.id] = (d.shop[i.id] || 0) + 1; }
+  else if (b.dataset.a) { d.coins -= AR[+b.dataset.a][1]; d.armor++; }
+  else if (b.dataset.f) { const f = FD.find(x => x.id === b.dataset.f); d.coins -= f.cost; d.food[f.id] = (d.food[f.id] || 0) + 1; }
+  else { const i = CN.find(x => x.id === b.dataset.c); d.coins -= i.cost; d.cons[i.id] = (d.cons[i.id] || 0) + 1; }
+  Store.save(); shopRender(e.currentTarget); if (S) hud();
+}
+
+/* ============ Запуск ============ */
+(function init() {
+  Store.load(); syncBtns();
+  const c = document.createElement('canvas'), g = c.getContext('2d'), r = mul(9);
+  c.width = c.height = 16;
+  for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) { g.fillStyle = ['#5a3d25', '#6b4a2e', '#4a321e', '#573a24'][r() * 4 | 0]; g.fillRect(x, y, 1, 1); }
+  document.body.style.backgroundImage = 'url(' + c.toDataURL() + ')';
+  document.body.style.backgroundSize = '64px 64px';
+  let last = performance.now();
+  setInterval(() => { const n = performance.now(); tick(Math.min(.5, (n - last) / 1000)); last = n; }, 100);
+  setInterval(() => Snd.note(), 700);
+  setInterval(saveRun, 5000);
+  loop();
+})();
+</script>
+</body>
+</html>
