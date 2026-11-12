@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Minecraft: Mine Clicker</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Pirata+One&display=swap">
 <style>
@@ -44,7 +44,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#2b2018;background-ble
 .pop{position:absolute;pointer-events:none;color:#fff;text-shadow:2px 2px #000;animation:up .7s forwards;font-size:11px;z-index:3}
 .pop.c{color:#ffd33d;font-size:16px}
 @keyframes up{to{transform:translateY(-60px);opacity:0}}
-.tabs{display:flex;gap:6px}.tabs .btn{flex:1;width:auto;margin:0;padding:12px 4px;font-size:10px}.tabs .btn.on{background:#5b8a3c}
+.tabs{display:flex;gap:6px}.tabs .btn{flex:1;width:auto;margin:0;padding:12px 2px;font-size:clamp(8px,2.3vw,10px)}.tabs .btn.on{background:#5b8a3c}
 .grid{display:grid;grid-template-columns:repeat(4,64px);gap:6px;justify-content:center}
 .slot{position:relative;width:64px;height:64px;background:#8b8b8b;border:3px solid;border-color:#373737 #fff #fff #373737;display:flex;align-items:center;justify-content:center;font-size:26px}
 .slot canvas{width:44px;height:44px;image-rendering:pixelated}
@@ -63,6 +63,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#2b2018;background-ble
 #sc h3{margin:0 0 10px;font-size:30px;letter-spacing:2px}#sc p{font-size:23px;line-height:1.3;margin:0 0 10px}#sc small{display:block;font-size:19px;margin-bottom:14px;color:#6a1010}
 #sc .btn{font-family:'Press Start 2P',monospace}
 #stage.bossfx{box-shadow:inset 0 0 60px rgba(160,0,0,.6)}
+.adbox{height:120px;background:linear-gradient(135deg,#ff5f6d,#ffc371);display:flex;align-items:center;justify-content:center;text-align:center;color:#fff;font-size:12px;margin:8px 0;border:3px solid #000;text-shadow:2px 2px #000;padding:8px}
 #pick{position:absolute;left:52%;top:-14%;width:50%;image-rendering:pixelated;pointer-events:none;transform-origin:6% 62%;z-index:2;filter:drop-shadow(3px 3px 0 rgba(0,0,0,.5))}
 .torch{position:absolute;top:24%;width:8px;height:34px;background:#6b4a2a;border:2px solid #000;display:none}
 .torch::before{content:'';position:absolute;left:-4px;top:-14px;width:12px;height:14px;background:#ffb02e;border:2px solid #7a3c00;animation:flick .25s infinite alternate}
@@ -75,14 +76,23 @@ html,body{margin:0;height:100%;overflow:hidden;background:#2b2018;background-ble
 #stage[data-biome="2"] #lavaG{display:block}
 @media (max-width:420px){body{font-size:10px}.grid{grid-template-columns:repeat(4,56px)}.slot{width:56px;height:56px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+body{touch-action:manipulation}
+#lang{position:absolute;top:6px;right:6px;z-index:30;font-size:9px;padding:6px 8px}
+#app:has(#game.active) #lang{display:none}
+#game .hud .row:first-child{flex-wrap:wrap;font-size:9px}
+#hpbarW.bh .bar{height:26px;border-color:#600}#hpbarW.bh .hp i{background:linear-gradient(#ff7b7b,#a80000)}
+#vEnch{width:min(92vw,520px)}
 </style>
 </head>
 <body>
 <div id="app">
+  <button class="btn mini lg" id="lang">🌐 RU</button>
   <section id="menu" class="screen active">
     <h1 class="logo">MINECRAFT<span>Mine Clicker</span></h1>
     <button class="btn" id="bPlay">Играть</button>
+    <button class="btn" id="bNew" hidden>Новая игра</button>
     <button class="btn" id="bShop">Магазин</button>
+    <button class="btn" id="bEnch">Зачарование</button>
     <button class="btn" id="bScores">Рекорды / Достижения</button>
     <button class="btn" id="bSet">Настройки</button>
   </section>
@@ -97,6 +107,11 @@ html,body{margin:0;height:100%;overflow:hidden;background:#2b2018;background-ble
     <button class="btn back">Назад</button>
   </section>
 
+  <section id="enchS" class="screen">
+    <div class="panel" id="enchP"></div>
+    <button class="btn back">Назад</button>
+  </section>
+
   <section id="settings" class="screen">
     <div class="panel"><h2>Настройки</h2></div>
     <button class="btn" id="bSnd">Звук: вкл</button>
@@ -107,7 +122,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:#2b2018;background-ble
 
   <section id="game" class="screen">
     <div class="hud">
-      <div class="row"><span id="hB">Блоки: 0</span><span id="hD">Глубина: 0 м</span><span id="hM">Руда: 0</span><button class="btn mini" id="bPause" aria-label="Пауза">II</button></div>
+      <div class="row"><span id="hB">Блоки: 0</span><span id="hD">Глубина: 0 м</span><span id="hM">Руда: 0</span><button class="btn mini lg" id="langG">🌐 RU</button><button class="btn mini" id="bPause" aria-label="Пауза">II</button></div>
       <div class="row"><span id="hP" style="width:42%">Кирка</span><div class="bar dur"><i id="durF"></i><span id="durT"></span></div></div>
       <div class="row"><span style="width:42%">Слой <b id="hL">1</b></span><div class="bar lay"><i id="layF"></i><span id="layT"></span></div></div>
       <div id="buffs" style="min-height:14px;font-size:9px;color:#ffd33d"></div>
@@ -121,11 +136,12 @@ html,body{margin:0;height:100%;overflow:hidden;background:#2b2018;background-ble
         <div class="row" style="gap:6px"><button class="btn mini" id="cT" aria-label="Динамит">💣 0</button><button class="btn mini" id="cP" aria-label="Зелье спешки">🧪 0</button><button class="btn mini" id="fA">🍎 0</button><button class="btn mini" id="fS">🥩 0</button><button class="btn mini" id="fC">🥕 0</button></div>
       </div>
       <div id="vShop" class="panel" hidden></div>
-      <div id="vInv" hidden><div class="grid" id="grid"></div><div class="stats" id="stats"></div></div>
+      <div id="vEnch" class="panel" hidden></div>
+      <div id="vInv" hidden><div class="grid" id="grid"></div><div class="stats" id="stats"></div><button class="btn" id="bSellAll">💰 Продать всё</button></div>
       <canvas id="fx"></canvas>
     </div>
     <div class="hud" style="flex-direction:row;justify-content:space-between;font-size:13px;letter-spacing:1px"><div id="hearts"></div><div id="hunger"></div></div>
-    <div class="tabs"><button class="btn on" id="tM">Шахта</button><button class="btn" id="tI">Инвентарь</button><button class="btn" id="tS">Магазин</button></div>
+    <div class="tabs"><button class="btn on" id="tM">Шахта</button><button class="btn" id="tI">Рюкзак</button><button class="btn" id="tS">Магазин</button><button class="btn" id="tE">Чары</button></div>
   </section>
 
   <div class="ov" id="pause">
@@ -138,10 +154,12 @@ html,body{margin:0;height:100%;overflow:hidden;background:#2b2018;background-ble
 
   <div class="ov" id="up">
     <h2 id="upT">Слой пройден!</h2>
+    <div class="bar lay" style="flex:none;width:min(80vw,320px)"><i id="upF" style="background:#ffb02e"></i><span id="upTm"></span></div>
     <div class="cards" id="cards"></div>
     <button class="btn" id="bRand">🎲 Случайный выбор (Рандом)</button>
   </div>
   <div class="ov" id="scroll"><div id="sc"><h3>Предупреждение</h3><p>В пещере появился опасный противник, будьте готовы при встрече с ним!</p><small id="scN"></small><button class="btn" id="scGo">К бою!</button></div></div>
+  <div class="ov" id="ad"><div class="panel"><h2>📺 Реклама</h2><div class="adbox">Супер-кирка 3000! (это учебная реклама)</div><div class="bar lay" style="width:100%;flex:none"><i id="adF" style="background:#ffb02e"></i><span id="adT"></span></div><button class="btn" id="adGo" disabled style="margin-top:10px">Загрузка...</button></div></div>
   <div id="toast"></div>
 </div>
 
@@ -165,6 +183,7 @@ const BL = {
   redstone: { n: 'Редстоун', r: 'Редстоун', c: ST, o: '#e01919', h: 1, w: 0 },
   emerald:  { n: 'Изумруд', r: 'Изумруд', c: ST, o: '#18d65a', h: 1, w: 0 },
   netherstar: { n: 'Звезда Незера', r: 'Звезда Незера', c: ['#c8c8c8', '#f0f0f0', '#b0b0b0', '#e2e2e2'], o: '#ffe94d', h: 1, w: 0 },
+  creeper:  { n: 'Крипер-гигант', c: ['#4fa83d', '#5dbb48', '#3f8e30', '#52b03f'], o: '#0b1f08', h: 1, w: 0, boss: 1 },
   lava:     { n: 'Лавовый монолит', c: ['#3b0d0d', '#5a1a0a', '#2a0808', '#4a1010'], o: '#ff7a00', h: 1, w: 0, boss: 1 },
   guardian: { n: 'Древний страж', c: ['#2a7a72', '#3a9a8e', '#1f5f5a', '#338a80'], o: '#f4d98b', h: 1, w: 0, boss: 1 }
 };
@@ -177,7 +196,7 @@ const UP = [
   { t: 'Прочность', i: '🛡️', w: 2, ok: () => S.unb < 5, d: () => 'Ур. ' + (S.unb + 1) + ': износ кирки при ударе ещё на 30% ниже', go: () => S.unb++ },
   { t: 'Починка', i: '🔧', w: 2, ok: () => S.mend < 4, d: () => 'Ур. ' + (S.mend + 1) + ': +25 прочности за каждый пройденный слой', go: () => S.mend++ },
   { t: 'Житель-шахтёр', i: '🧑‍🌾', w: 3, ok: () => S.auto < 10, d: () => 'Ещё один работник: +2.5 урона в секунду автоматически', go: () => S.auto++ },
-  { t: 'Удача', i: '🍀', w: 2, ok: () => S.fort < 5, d: () => 'Ур. ' + (S.fort + 1) + ': 8% шанс найти редстоун или изумруд, они дают бафф на 10 с', go: () => S.fort++ },
+  { t: 'Кладоискатель', i: '🍀', w: 2, ok: () => S.fort < 5, d: () => 'Ур. ' + (S.fort + 1) + ': 8% шанс найти редстоун или изумруд, они дают бафф на 10 с', go: () => S.fort++ },
   { t: 'Наковальня', i: '⚒️', w: 1, ok: () => S.dur < S.maxDur * .7, d: () => 'Полностью чинит кирку', go: () => { S.dur = S.maxDur; } }
 ];
 
@@ -195,7 +214,7 @@ const AC = [
 
 /* ============ Хранилище ============ */
 const Store = {
-  d: { best: { mined: 0, depth: 0, bosses: 0, runs: 0 }, ach: {}, snd: 1, mus: 1, coins: 0, shop: {}, cons: {}, armor: 0, food: {} },
+  d: { best: { mined: 0, depth: 0, bosses: 0, runs: 0 }, ach: {}, snd: 1, mus: 1, coins: 0, shop: {}, cons: {}, armor: 0, food: {}, ench: {}, lang: 'ru' },
   load() { try { const j = JSON.parse(localStorage.getItem('mmc1')); if (j) Object.assign(this.d, j); } catch (e) {} },
   save() { try { localStorage.setItem('mmc1', JSON.stringify(this.d)); } catch (e) {} }
 };
@@ -215,17 +234,38 @@ const Snd = {
     g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
     o.connect(g); g.connect(this.ctx.destination); o.start(t); o.stop(t + d);
   },
-  hit(c) { c ? this.tone(660, .14, 'triangle', .09, 1300) : this.tone(rnd(120, 190), .07, 'square', .05, 70); },
+  hit(c, k, p) {
+    const hard = { stone: 1100, coal: 1300, iron: 1700, gold: 1900, diamond: 2400, obsidian: 800, redstone: 1400, emerald: 2200, lava: 600, guardian: 700, netherstar: 2000 }[k] || 1200;
+    const base = [110, 160, 230, 330, 85][p] || 120;
+    this.noise(.09, hard * rnd(.9, 1.1), .35);
+    this.tone(base * rnd(.95, 1.08), .08, p >= 2 ? 'triangle' : 'square', .045, base * .5);
+    if (c) this.tone(880, .15, 'triangle', .08, 1500);
+  },
+  noise(d, f, v) {
+    if (!this.ctx || !Store.d.snd) return;
+    const c = this.ctx, n = c.sampleRate * d | 0, b = c.createBuffer(1, n, c.sampleRate), a = b.getChannelData(0);
+    for (let i = 0; i < n; i++) a[i] = (Math.random() * 2 - 1) * (1 - i / n);
+    const s = c.createBufferSource(), fl = c.createBiquadFilter(), g = c.createGain();
+    fl.type = 'bandpass'; fl.frequency.value = f; g.gain.value = v; s.buffer = b;
+    s.connect(fl); fl.connect(g); g.connect(c.destination); s.start();
+  },
   brk() { this.tone(110, .22, 'sawtooth', .07, 40); },
   win() { [392, 523, 659, 784].forEach((f, i) => setTimeout(() => this.tone(f, .2, 'square', .06), i * 110)); },
-  note() { if (S && !S.paused) this.tone([220, 262, 294, 330, 392, 440][Math.random() * 6 | 0], .9, 'triangle', .03, 0, true); }
+  step: 0,
+  note() {
+    if (!S || S.paused) return;
+    const sc = [[262, 294, 330, 392, 440, 523], [220, 262, 294, 330, 392, 440], [110, 131, 147, 165, 196, 220]][S.biome || 0];
+    const seq = [0, 2, 4, 2, 3, 1, 2, 0, 4, 5, 3, 2], i = this.step++ % seq.length;
+    this.tone(sc[seq[i]], 1.4, 'sine', .035, 0, true);
+    if (i % 4 === 0) this.tone(sc[0] / 2, 2.4, 'triangle', .03, 0, true);
+  }
 };
 
 /* ============ Состояние ============ */
 let S = null;
 const fresh = () => ({
   mined: 0, layerM: 0, layer: 1, pick: 0, eff: 0, unb: 0, mend: 0, auto: 0, fort: 0,
-  dur: 100, maxDur: 100, inv: {}, buffs: { haste: 0, power: 0 }, beacons: 0, bosses: 0, nextBoss: 100,
+  dur: 100, maxDur: 100, inv: {}, buffs: { haste: 0, power: 0 }, beacons: 0, bosses: 0, nextBoss: 40,
   clicks: 0, crits: 0, paused: false, view: 0, blk: null, ws: { x: .5, y: .5 }, bossT: 0, bossMax: 30, hp: 10, food: 100, atk: 4, up: 0
 });
 const dmg = () => { let d = PK[S.pick][1] * (1 + .15 * S.beacons) * (1 + .1 * (Store.d.shop.dmg || 0)); d *= S.food >= 90 ? 1.15 : S.food <= 0 ? .4 : 1; if (S.dur <= 0) d *= .3; if (S.buffs.power > 0) d *= 2; return d; };
@@ -298,7 +338,7 @@ function tile(b) {
   return TILES[b] = c.toDataURL();
 }
 function setBiome() {
-  const b = S.layer < 4 ? 0 : S.layer < 9 ? 1 : 2;
+  const b = S.mined < 50 ? 0 : S.mined < 150 ? 1 : 2;
   if (S.biome === b) return;
   S.biome = b; stage.style.backgroundImage = 'url(' + tile(b) + ')'; stage.dataset.biome = b;
   toast('Биом: ' + ['Поверхность', 'Каменная пещера', 'Нижний мир'][b]);
@@ -315,10 +355,11 @@ function nextKey() {
 }
 function moveWs() { S.ws = { x: rnd(.2, .8), y: rnd(.2, .8) }; }
 function newBlock() {
-  const boss = S.mined >= S.nextBoss, k = boss ? (S.bosses % 2 ? 'guardian' : 'lava') : nextKey();
-  const hp = Math.round(6 * (1 + S.mined * .07) * BL[k].h * (boss ? 9 : 1)), seed = Math.random() * 1e9 | 0;
-  S.blk = { k, hp, max: hp, seed, boss, cr: mkCracks(seed) };
-  if (boss) { S.bossMax = S.bossT = 30 + S.beacons * 3; S.atk = 4; showScroll(); }
+  const boss = S.mined >= S.nextBoss, big = boss && S.bosses % 3 === 2, bi = S.mined < 50 ? 0 : S.mined < 150 ? 1 : 2;
+  const k = boss ? ['creeper', 'guardian', 'lava'][bi] : nextKey();
+  const hp = Math.round(6 * (1 + S.mined * .07) * BL[k].h * (boss ? (big ? 9 : 5) * (1 + .25 * S.bosses) : 1)), seed = Math.random() * 1e9 | 0;
+  S.blk = { k, hp, max: hp, seed, boss, big, cr: mkCracks(seed) };
+  if (boss) { S.bossMax = S.bossT = 30 + S.beacons * 3 + (big ? 10 : 0); S.atkI = Math.max(2, 4 - .15 * S.bosses); S.atk = S.atkI; showScroll(); }
   moveWs(); setBiome(); render(); saveRun();
 }
 function click(e) {
@@ -327,12 +368,13 @@ function click(e) {
   const r = blk.getBoundingClientRect(), nx = (e.clientX - r.left) / r.width, ny = (e.clientY - r.top) / r.height;
   const crit = Math.hypot(nx - S.ws.x, ny - S.ws.y) < .17;
   let d = dmg();
+  if (S.blk.boss) d *= 1 + .15 * (Store.d.ench.boss || 0);
   S.clicks++;
   if (crit) { d *= 3; S.crits++; moveWs(); } else if (S.clicks % 5 === 0) moveWs();
   if (Math.random() < .1 * S.eff) d *= 2;
   if (!S.blk.boss && Math.random() < .02 * S.eff) d = S.blk.hp;
   S.dur = Math.max(0, S.dur - .5 * Math.pow(.7, S.unb)); S.food = Math.max(0, S.food - .2);
-  shake(); swing(); fx(e.clientX, e.clientY, crit ? 14 : 6); Snd.hit(crit); pop(e.clientX, e.clientY, d, crit);
+  shake(); swing(); fx(e.clientX, e.clientY, crit ? 14 : 6); Snd.hit(crit, S.blk.k, S.pick); pop(e.clientX, e.clientY, d, crit);
   damage(d);
 }
 function damage(d) { S.blk.hp -= d; if (S.blk.hp <= 0) breakBlock(); else render(); }
@@ -341,20 +383,28 @@ function breakBlock() {
   fx(r.left + r.width / 2, r.top + r.height / 2, 40);
   Snd.brk();
   if (b.boss) {
-    S.bosses++; S.beacons++; S.nextBoss += 100; S.inv.beacon = S.beacons;
-    add('netherstar'); const cc = 150 * S.bosses; Store.d.coins += cc; toast('Босс повержен! +' + cc + ' монет, Звезда Незера и Маяк'); Snd.win(); check(); save(); newBlock(); return;
+    S.bosses++; S.nextBoss += 40;
+    if (b.big) { S.beacons++; S.inv.beacon = S.beacons; add('netherstar'); }
+    const cc = Math.round((b.big ? 220 : 90) * (1 + .4 * S.bosses)); Store.d.coins += cc;
+    toast((b.big ? 'Большой босс' : 'Мини-босс') + ' повержен! +' + cc + ' монет' + (b.big ? ', Звезда Незера и Маяк' : '')); Snd.win(); check(); save(); newBlock(); return;
   }
   S.mined++; S.layerM++; add(b.k);
+  const lk = Store.d.ench.luck || 0;
+  if (lk && Math.random() < .07 * lk) {
+    let ex = 1; if (Math.random() < .04 * lk) ex++;
+    for (let i = 0; i < ex; i++) add(b.k);
+    toast('🍀 Удача! Выбито блоков: ' + (ex + 1)); fx(r.left + r.width / 2, r.top + r.height / 2, 20);
+  }
   if (Math.random() < .08 * S.fort) {
     const k = Math.random() < .65 ? 'redstone' : 'emerald';
     add(k); S.buffs[k === 'redstone' ? 'haste' : 'power'] = 10 + 2 * S.fort;
     toast(k === 'redstone' ? 'Редстоун! Спешка: авто-урон выше' : 'Изумруд! Сила: урон ×2');
   }
   check(); save();
-  if (S.layerM >= 15) { S.layerM = 0; S.layer++; levelUp(); } else newBlock();
+  if (S.layerM >= gapFor(S.layer - 1)) { S.layerM = 0; S.layer++; levelUp(); } else newBlock();
 }
 function levelUp() {
-  S.paused = true; S.up = 1;
+  S.paused = true; S.up = 1; S.upT = 10;
   S.dur = Math.min(S.maxDur, S.dur + 20 + S.mend * 25);
   const pool = UP.filter(u => u.ok()), picks = [];
   while (picks.length < 3 && pool.length) {
@@ -382,11 +432,16 @@ function save() {
   Store.save();
 }
 function tick(dt) {
+  if (S && S.up && S.upT > 0) {
+    S.upT -= dt; $('#upF').style.width = Math.max(0, S.upT * 10) + '%'; $('#upTm').textContent = Math.max(0, Math.ceil(S.upT)) + ' с';
+    if (S.upT <= 0) { $('#up').classList.remove('show'); S.up = 0; S.paused = false; toast('Время вышло: улучшение не получено'); newBlock(); }
+    return;
+  }
   if (!S || S.paused) return;
   S.food = Math.max(0, S.food - .1 * dt);
   if (S.food <= 0) S.hp -= dt / 6; else if (S.food >= 60 && S.hp < 10) S.hp = Math.min(10, S.hp + dt / 10);
   if (S.hp <= 0) { defeat(); return; }
-  if (S.blk.boss) { S.atk -= dt; if (S.atk <= 0) { S.atk = 4; hurt(1.5 + .5 * S.bosses); if (S.paused) return; } }
+  if (S.blk.boss) { S.atk -= dt; if (S.atk <= 0) { S.atk = S.atkI || 4; hurt(Math.min(7, 1.2 + .4 * S.bosses + (S.blk.big ? 1 : 0))); if (S.paused) return; } }
   ['haste', 'power'].forEach(k => { if (S.buffs[k] > 0) S.buffs[k] = Math.max(0, S.buffs[k] - dt); });
   if (S.blk.boss) {
     S.bossT -= dt;
@@ -400,7 +455,7 @@ function tick(dt) {
 function render() {
   const b = S.blk, p = 1 - Math.max(0, b.hp) / b.max;
   paint(blk, b.k, b.seed, b.cr.slice(0, Math.floor(p * b.cr.length)));
-  $('#wrap').style.scale = 1 - p * .3; stage.classList.toggle('bossfx', !!b.boss);
+  $('#wrap').style.scale = 1 - p * .3; stage.classList.toggle('bossfx', !!b.boss); $('#hpbarW').classList.toggle('bh', !!b.boss);
   $('#hpF').style.width = (100 - p * 100) + '%';
   $('#hpT').textContent = BL[b.k].n + ' ' + num(Math.max(0, b.hp)) + '/' + num(b.max);
   $('#ws').style.left = (S.ws.x * 100) + '%'; $('#ws').style.top = (S.ws.y * 100) + '%';
@@ -420,15 +475,15 @@ function hud() {
   $('#durF').style.width = (S.dur / S.maxDur * 100) + '%';
   $('#durT').textContent = Math.ceil(S.dur) + '/' + S.maxDur + (S.dur <= 0 ? ' сломана' : '');
   $('#hL').textContent = S.layer;
-  $('#layF').style.width = (S.layerM / 15 * 100) + '%';
-  $('#layT').textContent = S.layerM + '/15';
+  $('#layF').style.width = (S.layerM / gapFor(S.layer - 1) * 100) + '%';
+  $('#layT').textContent = S.layerM + '/' + gapFor(S.layer - 1);
   const bf = [];
   if (S.buffs.haste > 0) bf.push('Спешка ' + Math.ceil(S.buffs.haste) + 'с');
   if (S.buffs.power > 0) bf.push('Сила ' + Math.ceil(S.buffs.power) + 'с');
   if (dps() > 0) bf.push('DPS ' + num(dps()));
   $('#buffs').textContent = bf.join('   ');
   if (S.blk.boss) {
-    $('#bossN').textContent = BL[S.blk.k].n;
+    $('#bossN').textContent = (S.blk.big ? '👑 Большой босс' : '💀 Мини-босс') + ' · ур. ' + (S.bosses + 1) + ': ' + BL[S.blk.k].n;
     $('#bossF').style.width = (S.bossT / S.bossMax * 100) + '%';
     $('#bossT').textContent = Math.ceil(S.bossT) + ' с';
   }
@@ -441,14 +496,16 @@ function invRender() {
     const n = document.createElement('b'); n.textContent = S.inv[k] || 0; s.appendChild(n); g.appendChild(s);
   });
   const m = document.createElement('div'); m.className = 'slot'; m.title = 'Маяк'; m.innerHTML = '🔆<b>' + S.beacons + '</b>'; g.appendChild(m);
-  $('#stats').innerHTML = 'Кирка: ' + PK[S.pick][0] + ' (урон ' + num(dmg()) + ')<br>Эффективность: ' + S.eff + ' &nbsp; Прочность: ' + S.unb + '<br>Починка: ' + S.mend + ' &nbsp; Удача: ' + S.fort + '<br>Жители-шахтёры: ' + S.auto + ' &nbsp; Маяки: ' + S.beacons + '<br>Броня: ' + (Store.d.armor ? AR[Store.d.armor - 1][0] : 'нет');
+  $('#bSellAll').textContent = '💰 Продать всё (+' + sellVal() + ')';
+  $('#stats').innerHTML = 'Кирка: ' + PK[S.pick][0] + ' (урон ' + num(dmg()) + ')<br>Эффективность: ' + S.eff + ' &nbsp; Прочность: ' + S.unb + '<br>Починка: ' + S.mend + ' &nbsp; Кладоискатель: ' + S.fort + '<br>Жители-шахтёры: ' + S.auto + ' &nbsp; Маяки: ' + S.beacons + '<br>Броня: ' + (Store.d.armor ? AR[Store.d.armor - 1][0] : 'нет');
 }
 function setView(v) {
   if (!S) return;
-  S.view = v; $('#vMine').hidden = v !== 0; $('#vInv').hidden = v !== 1; $('#vShop').hidden = v !== 2;
-  ['tM', 'tI', 'tS'].forEach((id, i) => $('#' + id).classList.toggle('on', i === v));
+  S.view = v; $('#vMine').hidden = v !== 0; $('#vInv').hidden = v !== 1; $('#vShop').hidden = v !== 2; $('#vEnch').hidden = v !== 3;
+  ['tM', 'tI', 'tS', 'tE'].forEach((id, i) => $('#' + id).classList.toggle('on', i === v));
   if (v === 1) invRender();
   if (v === 2) shopRender($('#vShop'));
+  if (v === 3) enchRender($('#vEnch'));
 }
 
 /* ============ Экраны и меню ============ */
@@ -467,7 +524,7 @@ function start(cont) {
 }
 function syncBtns() {
   const on = v => v ? 'вкл' : 'выкл';
-  try { $('#bPlay').textContent = localStorage.getItem('mmc_run') ? 'Продолжить' : 'Играть'; } catch (e) {}
+  try { const h = !!localStorage.getItem('mmc_run'); $('#bPlay').textContent = h ? 'Продолжить' : 'Играть'; $('#bNew').hidden = !h; } catch (e) {}
   $('#bSnd').textContent = 'Звук: ' + on(Store.d.snd); $('#bMus').textContent = 'Музыка: ' + on(Store.d.mus);
   $('#pSnd').textContent = 'Звук/Музыка: ' + on(Store.d.snd || Store.d.mus);
 }
@@ -489,7 +546,7 @@ $('#bReset').onclick = () => {
   if (!rst) { rst = 1; $('#bReset').textContent = 'Точно? Нажми ещё раз'; setTimeout(() => { rst = 0; $('#bReset').textContent = 'Сбросить прогресс'; }, 3000); return; }
   rst = 0; $('#bReset').textContent = 'Сбросить прогресс';
   try { localStorage.removeItem('mmc_run'); } catch (e) {}
-  Object.assign(Store.d, { best: { mined: 0, depth: 0, bosses: 0, runs: 0 }, ach: {}, coins: 0, shop: {}, cons: {}, armor: 0, food: {} });
+  Object.assign(Store.d, { best: { mined: 0, depth: 0, bosses: 0, runs: 0 }, ach: {}, coins: 0, shop: {}, cons: {}, armor: 0, food: {}, ench: {} });
   S = null; Store.save(); syncBtns(); toast('Прогресс сброшен');
 };
 $('#bPause').onclick = () => pause(true);
@@ -518,13 +575,27 @@ addEventListener('pagehide', () => { if (S) { save(); saveRun(); } Store.save();
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && S) pause(!S.paused); });
 
 /* ============ Выживание, сохранение, боссы ============ */
-const AR = [['Кожаная', 40, 10], ['Кольчужная', 120, 22], ['Железная', 300, 36], ['Алмазная', 700, 50], ['Незеритовая', 1600, 65]];
+const AR = [['Кожаная', 60, 10], ['Кольчужная', 200, 22], ['Железная', 500, 36], ['Алмазная', 1100, 50], ['Незеритовая', 2400, 65]];
 const FD = [
-  { id: 'apple', n: 'Яблоко', d: '+25 сытости', cost: 8, f: 25, h: 0, b: 'fA', e: '🍎' },
-  { id: 'steak', n: 'Стейк', d: '+60 сытости', cost: 25, f: 60, h: 0, b: 'fS', e: '🥩' },
-  { id: 'carrot', n: 'Золотая морковь', d: '+100 сытости, +4 сердца', cost: 60, f: 100, h: 4, b: 'fC', e: '🥕' }
+  { id: 'apple', n: 'Яблоко', d: '+25 сытости', cost: 10, f: 25, h: 0, b: 'fA', e: '🍎' },
+  { id: 'steak', n: 'Стейк', d: '+60 сытости', cost: 30, f: 60, h: 0, b: 'fS', e: '🥩' },
+  { id: 'carrot', n: 'Золотая морковь', d: '+100 сытости, +4 сердца', cost: 75, f: 100, h: 4, b: 'fC', e: '🥕' }
 ];
 let hk = '';
+const GAPS = [15, 15, 20, 25, 35];
+function gapFor(n) { return n < 5 ? GAPS[n] : 35 + 10 * (n - 4); }
+const RI = { stone: '🪨', coal: '⚫', iron: '🔩', gold: '🪙', diamond: '💎', obsidian: '🟣', redstone: '🔴', emerald: '🟢', netherstar: '⭐' };
+const IC = { dmg: '⛏️', dur: '🛠️', auto: '🧑‍🌾', coin: '🤝' }, CI = { tnt: '💣', potion: '🧪' }, AI = ['🧥', '⛓️', '🛡️', '💎', '🔥'];
+function adRepair() {
+  if (!S) return;
+  const ov = $('#ad'), go = $('#adGo'); let t = 4;
+  S.paused = true; ov.classList.add('show'); go.disabled = true; go.textContent = 'Загрузка рекламы...'; $('#adF').style.width = '0%';
+  const iv = setInterval(() => {
+    t -= .1; $('#adF').style.width = (100 - t * 25) + '%'; $('#adT').textContent = Math.max(0, Math.ceil(t)) + ' с';
+    if (t <= 0) { clearInterval(iv); go.disabled = false; go.textContent = 'Получить награду'; }
+  }, 100);
+  go.onclick = () => { ov.classList.remove('show'); if (S) { S.paused = false; S.dur = Math.min(S.maxDur, S.dur + S.maxDur * .5); toast('Кирка починена на 50%'); hud(); } };
+}
 function loadRun() {
   try { const j = JSON.parse(localStorage.getItem('mmc_run')); if (j && j.blk) { const s = Object.assign(fresh(), j); s.paused = false; s.view = 0; s.up = 0; delete s.biome; delete s.pk; return s; } } catch (e) {}
   return null;
@@ -560,47 +631,284 @@ FD.forEach(f => $('#' + f.b).onclick = () => {
 });
 
 /* ============ Магазин ============ */
-const PR = { stone: 1, coal: 3, iron: 6, gold: 12, diamond: 40, obsidian: 25, redstone: 8, emerald: 30, netherstar: 250 };
+const PR = { stone: 1, coal: 4, iron: 8, gold: 15, diamond: 45, obsidian: 30, redstone: 10, emerald: 35, netherstar: 300 };
 const SH = [
-  { id: 'dmg', n: 'Закалка кирки', d: '+10% урона', base: 25, max: 10 },
-  { id: 'dur', n: 'Запас прочности', d: '+20 прочности со старта забега', base: 20, max: 5 },
-  { id: 'auto', n: 'Житель при старте', d: '+1 шахтёр со старта забега', base: 60, max: 3 },
-  { id: 'coin', n: 'Торговец', d: '+10% к цене продажи', base: 30, max: 5 }
+  { id: 'dmg', n: 'Закалка кирки', d: '+10% урона', base: 40, max: 10 },
+  { id: 'dur', n: 'Запас прочности', d: '+20 прочности со старта забега', base: 30, max: 5 },
+  { id: 'auto', n: 'Житель при старте', d: '+1 шахтёр со старта забега', base: 90, max: 3 },
+  { id: 'coin', n: 'Торговец', d: '+10% к цене продажи', base: 50, max: 5 }
 ];
 const CN = [
-  { id: 'tnt', n: 'Динамит', d: 'Ломает блок сразу (боссу −25% HP)', cost: 30 },
-  { id: 'potion', n: 'Зелье спешки', d: 'Спешка на 20 с', cost: 40 }
+  { id: 'tnt', n: 'Динамит', d: 'Ломает блок сразу (боссу −25% HP)', cost: 40 },
+  { id: 'potion', n: 'Зелье спешки', d: 'Спешка на 20 с', cost: 50 }
 ];
 const price = k => Math.round(PR[k] * (1 + .1 * (Store.d.shop.coin || 0)));
 const cost = i => Math.round(i.base * Math.pow(1.7, Store.d.shop[i.id] || 0));
 function shopRender(el) {
   const d = Store.d, inv = S ? S.inv : {};
-  let h = '<h2>Магазин: ' + d.coins + ' монет</h2><div class="ach"><b>Продажа ресурсов</b>' + (S ? '' : ' (доступна во время игры)') + '</div>';
-  ITEMS.forEach(k => { const n = inv[k] || 0; h += '<div class="ach row"><span>' + BL[k].r + ' ×' + n + '</span><button class="btn mini" data-s="' + k + '"' + (n ? '' : ' disabled') + '>+' + n * price(k) + '</button></div>'; });
-  h += '<div class="ach"><b>Постоянные баффы</b></div>';
-  SH.forEach(i => { const l = d.shop[i.id] || 0, m = l >= i.max; h += '<div class="ach row"><span>' + i.n + ' ' + l + '/' + i.max + '<br>' + i.d + '</span><button class="btn mini" data-b="' + i.id + '"' + (m || d.coins < cost(i) ? ' disabled' : '') + '>' + (m ? 'макс' : cost(i)) + '</button></div>'; });
-  h += '<div class="ach"><b>Броня</b> (снижает урон боссов)</div>';
-  AR.forEach((a, i) => { const own = d.armor > i; h += '<div class="ach row"><span>' + a[0] + ' −' + a[2] + '%</span><button class="btn mini" data-a="' + i + '"' + (own || d.armor !== i || d.coins < a[1] ? ' disabled' : '') + '>' + (own ? '✔' : a[1]) + '</button></div>'; });
-  h += '<div class="ach"><b>Еда</b></div>';
-  FD.forEach(f => { h += '<div class="ach row"><span>' + f.n + ' (есть ' + (d.food[f.id] || 0) + ')<br>' + f.d + '</span><button class="btn mini" data-f="' + f.id + '"' + (d.coins < f.cost ? ' disabled' : '') + '>' + f.cost + '</button></div>'; });
-  h += '<div class="ach"><b>Расходники</b></div>';
-  CN.forEach(i => { h += '<div class="ach row"><span>' + i.n + ' (есть ' + (d.cons[i.id] || 0) + ')<br>' + i.d + '</span><button class="btn mini" data-c="' + i.id + '"' + (d.coins < i.cost ? ' disabled' : '') + '>' + i.cost + '</button></div>'; });
+  let h = '<h2>🛒 Магазин: ' + d.coins + ' 💰</h2><button class="btn" data-all="1" style="width:100%;margin:0 0 8px"' + (S && sellVal() ? '' : ' disabled') + '>💰 Продать всё (+' + sellVal() + ')</button><div class="ach"><b>💰 Продажа ресурсов</b>' + (S ? '' : ' (доступна во время игры)') + '</div>';
+  ITEMS.forEach(k => { const n = inv[k] || 0; h += '<div class="ach row"><span>' + RI[k] + ' ' + BL[k].r + ' ×' + n + '</span><button class="btn mini" data-s="' + k + '"' + (n ? '' : ' disabled') + '>+' + n * price(k) + '</button></div>'; });
+  h += '<div class="ach"><b>⛏️ Постоянные баффы</b></div>';
+  SH.forEach(i => { const l = d.shop[i.id] || 0, m = l >= i.max; h += '<div class="ach row"><span>' + IC[i.id] + ' ' + i.n + ' ' + l + '/' + i.max + '<br>' + i.d + '</span><button class="btn mini" data-b="' + i.id + '"' + (m || d.coins < cost(i) ? ' disabled' : '') + '>' + (m ? 'макс' : cost(i)) + '</button></div>'; });
+  h += '<div class="ach"><b>🛡️ Броня</b> (снижает урон боссов)</div>';
+  AR.forEach((a, i) => { const own = d.armor > i; h += '<div class="ach row"><span>' + AI[i] + ' ' + a[0] + ' −' + a[2] + '%</span><button class="btn mini" data-a="' + i + '"' + (own || d.armor !== i || d.coins < a[1] ? ' disabled' : '') + '>' + (own ? '✔' : a[1]) + '</button></div>'; });
+  h += '<div class="ach"><b>🥩 Еда</b></div>';
+  FD.forEach(f => { h += '<div class="ach row"><span>' + f.e + ' ' + f.n + ' (есть ' + (d.food[f.id] || 0) + ')<br>' + f.d + '</span><button class="btn mini" data-f="' + f.id + '"' + (d.coins < f.cost ? ' disabled' : '') + '>' + f.cost + '</button></div>'; });
+  h += '<div class="ach"><b>🔧 Ремонт</b></div><div class="ach row"><span>📺 Починка за рекламу<br>+50% прочности кирки</span><button class="btn mini" data-ad="1"' + (S ? '' : ' disabled') + '>▶</button></div><div class="ach"><b>🧪 Расходники</b></div>';
+  CN.forEach(i => { h += '<div class="ach row"><span>' + CI[i.id] + ' ' + i.n + ' (есть ' + (d.cons[i.id] || 0) + ')<br>' + i.d + '</span><button class="btn mini" data-c="' + i.id + '"' + (d.coins < i.cost ? ' disabled' : '') + '>' + i.cost + '</button></div>'; });
   el.innerHTML = h;
 }
 function shopClick(e) {
   const b = e.target.closest('button'), d = Store.d;
   if (!b || b.disabled) return;
-  if (b.dataset.s) { const k = b.dataset.s; d.coins += (S.inv[k] || 0) * price(k); S.inv[k] = 0; }
+  if (b.dataset.all) sellAll();
+  else if (b.dataset.s) { const k = b.dataset.s; d.coins += (S.inv[k] || 0) * price(k); S.inv[k] = 0; }
   else if (b.dataset.b) { const i = SH.find(x => x.id === b.dataset.b); d.coins -= cost(i); d.shop[i.id] = (d.shop[i.id] || 0) + 1; }
+  else if (b.dataset.ad) { adRepair(); return; }
   else if (b.dataset.a) { d.coins -= AR[+b.dataset.a][1]; d.armor++; }
   else if (b.dataset.f) { const f = FD.find(x => x.id === b.dataset.f); d.coins -= f.cost; d.food[f.id] = (d.food[f.id] || 0) + 1; }
   else { const i = CN.find(x => x.id === b.dataset.c); d.coins -= i.cost; d.cons[i.id] = (d.cons[i.id] || 0) + 1; }
   Store.save(); shopRender(e.currentTarget); if (S) hud();
 }
 
+/* ============ Продажа, зачарования, язык ============ */
+const sellVal = () => S ? ITEMS.reduce((a, k) => a + (S.inv[k] || 0) * price(k), 0) : 0;
+function sellAll() {
+  const v = sellVal();
+  if (!v) { toast('Нечего продавать'); return; }
+  ITEMS.forEach(k => S.inv[k] = 0); Store.d.coins += v; Store.save();
+  Snd.tone(660, .12, 'square', .06, 990); toast('Продано: +' + v + ' 💰');
+}
+const EC = [
+  { id: 'boss', i: '⚔️', n: 'Урон по боссам', d: '+15% урона кликов по боссам за уровень', base: 60, max: 10 },
+  { id: 'luck', i: '🍀', n: 'Удача', d: '+7% шанс выбить сразу несколько блоков', base: 50, max: 10 }
+];
+const ecost = i => Math.round(i.base * Math.pow(1.6, Store.d.ench[i.id] || 0));
+function enchRender(el) {
+  const d = Store.d; let h = '<h2>✨ Зачарование: ' + d.coins + ' 💰</h2>';
+  EC.forEach(i => {
+    const l = d.ench[i.id] || 0, m = l >= i.max;
+    h += '<div class="ach row"><span>' + i.i + ' ' + i.n + ' ' + l + '/' + i.max + '<br><span style="color:#7a2fd0">' + '▰'.repeat(l) + '▱'.repeat(i.max - l) + '</span><br>' + i.d + '</span><button class="btn mini" data-e="' + i.id + '"' + (m || d.coins < ecost(i) ? ' disabled' : '') + '>' + (m ? 'макс' : ecost(i)) + '</button></div>';
+  });
+  el.innerHTML = h;
+}
+function enchClick(e) {
+  const b = e.target.closest('button'), d = Store.d;
+  if (!b || b.disabled) return;
+  const i = EC.find(x => x.id === b.dataset.e);
+  if (!i || d.coins < ecost(i) || (d.ench[i.id] || 0) >= i.max) return;
+  d.coins -= ecost(i); d.ench[i.id] = (d.ench[i.id] || 0) + 1; Store.save();
+  Snd.start(); Snd.tone(784, .15, 'triangle', .07, 1568);
+  enchRender(e.currentTarget); if (S) hud();
+}
+$('#bSellAll').onclick = () => { sellAll(); invRender(); hud(); };
+$('#bEnch').onclick = () => { enchRender($('#enchP')); go('enchS'); };
+$('#bNew').onclick = () => { try { localStorage.removeItem('mmc_run'); } catch (e) {} start(false); };
+$('#tE').onclick = () => setView(3);
+$('#enchP').onclick = enchClick; $('#vEnch').onclick = enchClick;
+document.addEventListener('gesturestart', e => e.preventDefault());
+
+/* --- RU/EN: код пишет по-русски, слой ниже мгновенно переводит видимый текст --- */
+let lang = 'ru';
+const PH = `Играть|Play
+Продолжить|Continue
+Новая игра|New game
+Магазин|Shop
+Зачарование|Enchanting
+Чары|Enchant
+Рекорды / Достижения|Records / Achievements
+Рекорды|Records
+Достижения|Achievements
+Достижение: |Achievement: 
+Настройки|Settings
+Назад|Back
+Сбросить прогресс|Reset progress
+Точно? Нажми ещё раз|Sure? Tap again
+Прогресс сброшен|Progress reset
+Звук/Музыка: |Sound/Music: 
+Звук: |Sound: 
+Музыка: |Music: 
+выкл|off
+вкл|on
+Блоки: |Blocks: 
+Глубина: |Depth: 
+Монеты: |Coins: 
+Руда: |Ore: 
+Шахта|Mine
+Рюкзак|Bag
+Пауза|Pause
+В главное меню|Main menu
+Сдаться (рестарт)|Give up (restart)
+Слой пройден!|Layer cleared!
+Слой |Layer 
+ пройден! Выбери улучшение| cleared! Pick an upgrade
+🎲 Случайный выбор (Рандом)|🎲 Random pick
+Предупреждение|Warning
+В пещере появился опасный противник, будьте готовы при встрече с ним!|A dangerous enemy has appeared in the cave. Be ready to face it!
+К бою!|To battle!
+ · Опасность: | · Danger: 
+📺 Реклама|📺 Advertisement
+Супер-кирка 3000! (это учебная реклама)|Super Pickaxe 3000! (this is a demo ad)
+Загрузка рекламы...|Loading ad...
+Загрузка...|Loading...
+Получить награду|Claim reward
+Камень|Stone
+Булыжник|Cobblestone
+Угольная руда|Coal ore
+Уголь|Coal
+Железная руда|Iron ore
+Железо|Iron
+Золотая руда|Gold ore
+Золото|Gold
+Алмазная руда|Diamond ore
+Алмазы|Diamonds
+Обсидиан|Obsidian
+Редстоун|Redstone
+редстоун|redstone
+Изумруд|Emerald
+изумруд|emerald
+Звезда Незера|Nether Star
+Лавовый монолит|Lava Monolith
+Древний страж|Ancient Guardian
+Крипер-гигант|Giant Creeper
+Деревянная|Wooden
+Каменная пещера|Stone Cave
+Каменная|Stone
+Железная|Iron
+Алмазная|Diamond
+Незеритовая|Netherite
+Кожаная|Leather
+Кольчужная|Chainmail
+кирка|pickaxe
+Кирка: |Pickaxe: 
+Новая кирка|New pickaxe
+: урон ×|: damage ×
+, полный ремонт, прочность +20|, full repair, durability +20
+Эффективность|Efficiency
+Ур. |Lv. 
+: 10% шанс двойного урона и 2% шанс сломать блок с одного удара|: 10% chance of double damage and 2% chance to break a block in one hit
+Прочность|Durability
+: износ кирки при ударе ещё на 30% ниже|: pickaxe wear per hit is 30% lower
+Починка за рекламу|Repair via ad
+Починка|Mending
+: +25 прочности за каждый пройденный слой|: +25 durability per cleared layer
+Житель-шахтёр|Miner Villager
+Ещё один работник: +2.5 урона в секунду автоматически|Another worker: +2.5 damage per second automatically
+Кладоискатель|Treasure Hunter
+: 8% шанс найти редстоун или изумруд, они дают бафф на 10 с|: 8% chance to find redstone or emerald, giving a 10 s buff
+Наковальня|Anvil
+Полностью чинит кирку|Fully repairs the pickaxe
+Первый блок|First Block
+Добыть 1 блок|Mine 1 block
+Шахтёр|Miner
+Добыть 50 блоков|Mine 50 blocks
+Глубокая шахта|Deep Mine
+Добыть 150 блоков|Mine 150 blocks
+Алмазы!|Diamonds!
+Добыть алмазную руду|Mine diamond ore
+Тёмный камень|Dark Stone
+Добыть обсидиан|Mine obsidian
+Меткий глаз|Sharp Eye
+25 критических ударов за забег|25 critical hits in one run
+Счастливчик|Lucky
+Найти изумруд|Find an emerald
+Незерит|Netherite
+Получить незеритовую кирку|Get a netherite pickaxe
+Победитель боссов|Boss Slayer
+Победить босса|Defeat a boss
+Биом: |Biome: 
+Поверхность|Surface
+Нижний мир|Nether
+ повержен! +| defeated! +
+ монет, Звезда Незера и Маяк| coins, Nether Star and Beacon
+ монет| coins
+Большой босс|Big Boss
+Мини-босс|Mini-boss
+ · ур. | · Lv. 
+Босс сбежал! Вернётся через 20 блоков|The boss fled! It returns in 20 blocks
+Время вышло: улучшение не получено|Time is up: no upgrade received
+Редстоун! Спешка: авто-урон выше|Redstone! Haste: auto damage is higher
+Изумруд! Сила: урон ×2|Emerald! Strength: damage ×2
+Остатки проданы: +|Leftovers sold: +
+Поражение! Откат на чекпоинт, ресурсы −50%|Defeat! Back to checkpoint, resources −50%
+Босс бьёт: −|The boss hits: −
+Кирка починена на 50%|Pickaxe repaired by 50%
+Спешка на 20 с|Haste for 20 s
+Спешка |Haste 
+Сила |Strength 
+ сломана| broken
+Макс. блоков: |Best blocks: 
+Макс. глубина: |Best depth: 
+Боссов повержено: |Bosses defeated: 
+Забегов: |Runs: 
+ (урон | (damage 
+Жители-шахтёры: |Miner villagers: 
+Маяки: |Beacons: 
+Маяк|Beacon
+Броня: нет|Armor: none
+Броня: |Armor: 
+Броня|Armor
+ (снижает урон боссов)| (reduces boss damage)
+Продажа ресурсов|Selling resources
+ (доступна во время игры)| (available during a run)
+Постоянные баффы|Permanent upgrades
+Закалка кирки|Pickaxe Tempering
++10% урона|+10% damage
+Запас прочности|Durability Reserve
++20 прочности со старта забега|+20 durability at run start
+Житель при старте|Starting Villager
++1 шахтёр со старта забега|+1 miner from run start
+Торговец|Merchant
++10% к цене продажи|+10% sell price
+макс|max
+🥩 Еда|🥩 Food
+Яблоко|Apple
+Стейк|Steak
+Золотая морковь|Golden Carrot
+сытости|hunger
+сердца|hearts
+ (есть | (owned 
+Ремонт|Repair
++50% прочности кирки|+50% pickaxe durability
+Расходники|Consumables
+Динамит|Dynamite
+Ломает блок сразу (боссу −25% HP)|Breaks a block instantly (boss −25% HP)
+Зелье спешки|Haste Potion
+Урон по боссам|Boss Damage
++15% урона кликов по боссам за уровень|+15% click damage vs bosses per level
+Удача! Выбито блоков: |Luck! Blocks knocked out: 
+Удача|Luck
++7% шанс выбить сразу несколько блоков|+7% chance to knock out several blocks at once
+Продать всё|Sell all
+Нечего продавать|Nothing to sell
+Продано: +|Sold: +`.split('\n').map(l => l.split('|')).sort((a, b) => b[0].length - a[0].length);
+const CY = /[А-Яа-яЁё]/, orig = new WeakMap();
+const tr = s => { for (const [r, e] of PH) s = s.split(r).join(e); return s.replace(/(\d)\s?с(?![а-яё])/g, '$1 s').replace(/(\d) м(?![а-яё])/g, '$1 m'); };
+const one = n => { if (CY.test(n.nodeValue)) { orig.set(n, n.nodeValue); n.nodeValue = tr(n.nodeValue); } };
+function xlate(root) {
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let n; n = w.nextNode();) {
+    if (lang === 'en') one(n); else if (orig.has(n)) { n.nodeValue = orig.get(n); orig.delete(n); }
+  }
+}
+new MutationObserver(ms => {
+  if (lang !== 'en') return;
+  ms.forEach(m => {
+    if (m.type === 'characterData') one(m.target);
+    else m.addedNodes.forEach(n => n.nodeType === 3 ? one(n) : n.nodeType === 1 && xlate(n));
+  });
+}).observe($('#app'), { childList: true, subtree: true, characterData: true });
+function setLang(l) {
+  lang = l; Store.d.lang = l; Store.save(); document.documentElement.lang = l;
+  document.querySelectorAll('.lg').forEach(b => b.textContent = '🌐 ' + l.toUpperCase());
+  xlate($('#app')); syncBtns(); scoresRender(); enchRender($('#enchP')); shopRender($('#shopP'));
+  if (S) { hk = ''; render(); if (S.view === 1) invRender(); if (S.view === 2) shopRender($('#vShop')); if (S.view === 3) enchRender($('#vEnch')); }
+}
+document.querySelectorAll('.lg').forEach(b => b.onclick = () => setLang(lang === 'ru' ? 'en' : 'ru'));
+
 /* ============ Запуск ============ */
 (function init() {
-  Store.load(); syncBtns();
+  Store.load(); setLang(Store.d.lang === 'en' ? 'en' : 'ru');
   const c = document.createElement('canvas'), g = c.getContext('2d'), r = mul(9);
   c.width = c.height = 16;
   for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) { g.fillStyle = ['#5a3d25', '#6b4a2e', '#4a321e', '#573a24'][r() * 4 | 0]; g.fillRect(x, y, 1, 1); }
